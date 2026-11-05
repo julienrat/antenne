@@ -27,6 +27,8 @@ jobs:
     env:
       # aws-lc-sys (tiré par str0m / dimpl) exige NASM sous Windows : objets pré-assemblés.
       AWS_LC_SYS_PREBUILT_NASM: "1"
+      # CMake 4 refuse le vieux CMakeLists d'Opus (compilé depuis les sources sous Windows).
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     strategy:
       fail-fast: false
       matrix:

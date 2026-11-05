@@ -6,10 +6,13 @@
 # Prérequis : Rust, cmake, clang, libpipewire-0.3-dev, libasound2-dev.
 # libopus est compilé et lié statiquement (rien à embarquer). libpipewire et
 # libasound viennent du système hôte : elles doivent correspondre à son
-# serveur audio. La glibc minimale est celle de la machine de construction :
-# construire sur une distribution ancienne (ex. Ubuntu 22.04) pour couvrir
-# plus de systèmes.
+# serveur audio. La glibc minimale est celle de la machine de construction ;
+# PipeWire ≥ 1.0 est nécessaire pour compiler (libspa 0.10), d'où Ubuntu 24.04.
 set -euo pipefail
+
+# CMake 4 refuse le `cmake_minimum_required` (< 3.5) des sources d'Opus
+# embarquées par audiopus_sys.
+export CMAKE_POLICY_VERSION_MINIMUM="${CMAKE_POLICY_VERSION_MINIMUM:-3.5}"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"

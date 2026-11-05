@@ -89,7 +89,7 @@ Studio (extension `ms-vscode.cpptools`) ; CodeLLDB fonctionne aussi.
 
 | OS | Paquet | Construction | Dépendances à l'exécution |
 |----|--------|--------------|---------------------------|
-| Linux x86_64 | AppImage | `packaging/linux/build-appimage.sh` (télécharge `appimagetool`) | glibc ≥ celle de la machine de build (2.39 en local, 2.35 via la CI Ubuntu 22.04), `libpipewire-0.3`, `libasound2`, `pactl` (pipewire-pulse ou pulseaudio-utils) |
+| Linux x86_64 | AppImage | `packaging/linux/build-appimage.sh` (télécharge `appimagetool`) | glibc ≥ 2.39 (Ubuntu 24.04, Mint 22, Debian 13, Fedora 40 ou plus récents) : la CI construit sur Ubuntu 24.04, Ubuntu 22.04 ayant un PipeWire trop ancien pour libspa 0.10, `libpipewire-0.3`, `libasound2`, `pactl` (pipewire-pulse ou pulseaudio-utils) |
 | macOS 11+ (arm64 + x86_64) | DMG universel | `packaging/macos/build-dmg.sh`, **sur un Mac uniquement** (SDK CoreAudio, `lipo`, `codesign`, `hdiutil`) ou CI `release.yml` | BlackHole (ou autre pilote de bouclage) pour les cartes virtuelles ; autorisation micro accordée au Terminal |
 
 Non signé par un Developer ID ni notarisé : Gatekeeper demande clic droit > Ouvrir au

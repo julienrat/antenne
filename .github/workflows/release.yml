@@ -16,8 +16,9 @@ permissions:
 jobs:
   appimage:
     name: AppImage (Linux x86_64)
-    # Distribution ancienne : l'AppImage exige la glibc de la machine de build.
-    runs-on: ubuntu-22.04
+    # L'AppImage exige la glibc de la machine de build. Ubuntu 22.04 est trop
+    # ancien : son PipeWire (0.3.48) ne compile pas avec libspa 0.10 (cpal).
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

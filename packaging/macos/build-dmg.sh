@@ -8,6 +8,10 @@
 # premier lancement (clic droit > Ouvrir).
 set -euo pipefail
 
+# CMake 4 refuse le `cmake_minimum_required` (< 3.5) des sources d'Opus
+# embarquées par audiopus_sys.
+export CMAKE_POLICY_VERSION_MINIMUM="${CMAKE_POLICY_VERSION_MINIMUM:-3.5}"
+
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
