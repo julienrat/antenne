@@ -12,8 +12,10 @@ name = "antenne"
 path = "src/main.rs"
 
 [features]
-default = []
-# Active l'encodeur Opus (libopus). `cargo run -p antenne --features opus -- …`
+# Opus par défaut : codec de toutes les cartes de l'exemple, natif WebRTC.
+# libopus vient du système (pkg-config) ou est compilé depuis les sources (cmake).
+# Sans Opus : `cargo build --no-default-features`.
+default = ["opus"]
 opus = ["antenne-codec/opus"]
 
 [dependencies]

@@ -31,6 +31,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Async / réseau
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "sync", "time"] }
 axum = "0.8"
+# WebRTC « sans-IO ». Crypto 100 % Rust : ni cmake ni NASM sur les trois OS.
+str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 bytes = "1"
 futures-util = "0.3"
 

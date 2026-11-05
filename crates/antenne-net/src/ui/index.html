@@ -195,7 +195,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
     <h2 id="logTitle">Journal</h2>
     <ol id="log"></ol>
   </section>
-  <p class="foot">Les réglages sont enregistrés dans le fichier de configuration TOML du serveur (l'ancienne version est gardée en <code>.bak</code>). « Écouter » lit le flux de debug dans le navigateur avec un tampon court (Web Audio) : il compte comme un auditeur ; la latence affichée est celle du lecteur.</p>
+  <p class="foot">Les réglages sont enregistrés dans le fichier de configuration TOML du serveur (l'ancienne version est gardée en <code>.bak</code>). « Écouter » se connecte en WebRTC, comme un ESP32 (flux WAV de debug pour les cartes en PCM 16) : il compte comme un auditeur ; la latence affichée est celle mesurée par le navigateur.</p>
 </div>
 
 <dialog id="cardDlg" aria-labelledby="cardTitle">
@@ -419,7 +419,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
         <strong>${esc(c.name)}</strong>
         <span>${nCh(c) === 1 ? "Mono" : "Stéréo"}, ${sourceText(c)}</span>
         ${c.status.state === "failed" ? `<span class="error">${esc(c.status.error)}</span>` : ""}
-        <div class="paths">${pathBtn("HTTP", c.debug_stream, "WAV")}${pathBtn("WebRTC", c.whep_path, "jalon 3")}</div>
+        <div class="paths">${pathBtn("HTTP", c.debug_stream, "WAV")}${pathBtn("WebRTC", c.whep_path, "WHEP")}</div>
       </div>
       <div class="meters" aria-hidden="true">${rows}<div class="scale num"><span>−60</span><span>−40</span><span>−20</span><span>0 dB</span></div></div>
       <dl class="stats">
@@ -615,7 +615,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
       g711u: "Mono 8 kHz, très léger à décoder pour les petits ESP32.",
       g711a: "Mono 8 kHz, très léger à décoder pour les petits ESP32.",
       pcm16: "Non compressé : gros débit, hors WebRTC standard.",
-    }[codec] + " L'encodage sert au WebRTC (jalon 3) ; le flux HTTP de debug reste en WAV.";
+    }[codec] + " L'encodage sert au WebRTC ; le flux HTTP de debug reste en WAV.";
 
     // Prévenir quand l'enregistrement va couper le son de la carte.
     let restart = "";
@@ -769,14 +769,23 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
   registerProcessor("antenne-player", AntennePlayer);`;
   const Ring = new Function(RING_SRC + "\nreturn Ring;")();
 
-  const player = { id: null, ctx: null, abort: null };
+  // Lecteur courant : WebRTC (WHEP) si la carte le permet, sinon flux WAV.
+  const player = { id: null, kind: null, ctx: null, abort: null, pc: null, audio: null, location: null, timer: null };
 
   function stopListening(silent) {
     if (!player.id) return;
     const card = S.cards.find((c) => c.id === player.id);
-    player.abort.abort();             // ferme la connexion HTTP : libère la place d'auditeur
-    player.ctx.close().catch(() => {});
-    player.id = null; player.ctx = null; player.abort = null;
+    if (player.kind === "webrtc") {
+      clearInterval(player.timer);
+      // DELETE WHEP : le serveur ferme la session et libère la place d'auditeur.
+      if (player.location) fetch(player.location, { method: "DELETE" }).catch(() => {});
+      player.pc.close();
+      player.audio.srcObject = null;
+    } else {
+      player.abort.abort();             // ferme la connexion HTTP : libère la place d'auditeur
+      player.ctx.close().catch(() => {});
+    }
+    Object.assign(player, { id: null, kind: null, ctx: null, abort: null, pc: null, audio: null, location: null, timer: null });
     S.playing = null;
     if (!silent) log(`Écoute arrêtée${card ? " : " + card.name : ""}`);
     renderRack();
@@ -801,7 +810,81 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
     return [acc, false];
   }
 
+  const webrtcCodecs = ["opus", "g711u", "g711a"];
+
   async function startListening(id) {
+    const card = S.cards.find((c) => c.id === id);
+    if (card && webrtcCodecs.includes(card.encoding.codec) && window.RTCPeerConnection) return startWebRtc(card);
+    return startWav(id);
+  }
+
+  // Écoute WebRTC : exactement le chemin d'un ESP32 (offre recvonly, POST WHEP).
+  async function startWebRtc(card) {
+    stopListening(true);
+    const id = card.id;
+    const audio = new Audio();
+    audio.autoplay = true;
+    const pc = new RTCPeerConnection();
+    Object.assign(player, { id, kind: "webrtc", pc, audio });
+    S.playing = id;
+    renderRack();
+    try {
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      pc.ontrack = (e) => {
+        audio.srcObject = e.streams[0] || new MediaStream([e.track]);
+        audio.play().catch((err) => toast(`Lecture bloquée par le navigateur : ${err.message}`));
+      };
+      await pc.setLocalDescription(await pc.createOffer());
+      // Offre complète (WHEP sans trickle ICE) : on attend la collecte des candidats.
+      await new Promise((resolve) => {
+        if (pc.iceGatheringState === "complete") return resolve();
+        pc.addEventListener("icegatheringstatechange", () => pc.iceGatheringState === "complete" && resolve());
+        setTimeout(resolve, 1500);
+      });
+      const resp = await fetch(card.whep_path, { method: "POST", headers: { "Content-Type": "application/sdp" }, body: pc.localDescription.sdp });
+      if (resp.status !== 201) throw new Error((await resp.text()) || `erreur ${resp.status}`);
+      if (player.id !== id) return;
+      player.location = resp.headers.get("Location");
+      await pc.setRemoteDescription({ type: "answer", sdp: await resp.text() });
+      pc.addEventListener("connectionstatechange", () => {
+        if (player.id !== id) return;
+        if (pc.connectionState === "connected") log(`Écoute WebRTC : ${card.name}`);
+        if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+          stopListening(true);
+          toast("Connexion WebRTC perdue");
+          log(`WebRTC interrompu : ${card.name}`);
+        }
+      });
+      // Latence côté navigateur : tampon de gigue moyen + aller réseau (RTT / 2).
+      let prev = null;
+      player.timer = setInterval(async () => {
+        if (player.id !== id) return;
+        let inbound = null, pair = null;
+        (await pc.getStats()).forEach((st) => {
+          if (st.type === "inbound-rtp" && st.kind === "audio") inbound = st;
+          if (st.type === "candidate-pair" && st.nominated && st.state === "succeeded") pair = st;
+        });
+        const el = $("latNow");
+        if (!inbound || !el) return;
+        const cur = { delay: inbound.jitterBufferDelay || 0, count: inbound.jitterBufferEmittedCount || 0 };
+        const jb = prev && cur.count > prev.count ? (cur.delay - prev.delay) / (cur.count - prev.count) : null;
+        prev = cur;
+        const rtt = pair && pair.currentRoundTripTime != null ? pair.currentRoundTripTime / 2 : 0;
+        if (jb != null) {
+          const lost = inbound.packetsLost ? ` · ${inbound.packetsLost} perdus` : "";
+          el.textContent = `WebRTC ≈ ${Math.round((jb + rtt) * 1000)} ms${lost}`;
+        }
+      }, 1000);
+    } catch (e) {
+      if (player.id !== id) return;
+      stopListening(true);
+      toast(`Écoute WebRTC impossible : ${e.message}`);
+      log(`Échec de l'écoute WebRTC de ${card.name} : ${e.message}`);
+    }
+  }
+
+  // Écoute du flux WAV de debug (cartes en PCM 16, ou navigateur sans WebRTC).
+  async function startWav(id) {
     stopListening(true);
     const card = S.cards.find((c) => c.id === id);
     let ctx;
@@ -813,7 +896,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
       return;
     }
     const abort = new AbortController();
-    Object.assign(player, { id, ctx, abort });
+    Object.assign(player, { id, kind: "wav", ctx, abort });
     S.playing = id;
     renderRack();
     try {

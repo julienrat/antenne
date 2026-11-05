@@ -13,6 +13,7 @@ use crate::cards::{CardManager, ManagerHandle};
 
 pub async fn run(config: Config, config_path: PathBuf) -> anyhow::Result<()> {
     let bind = config.server.bind;
+    let public_ip = config.server.public_ip;
     let audio = config.audio.clone();
 
     // Création des cartes virtuelles et ouverture des périphériques : bloquant.
@@ -31,6 +32,8 @@ pub async fn run(config: Config, config_path: PathBuf) -> anyhow::Result<()> {
         started_at: Instant::now(),
         cards: state_cards,
         control: Arc::new(manager.clone()),
+        public_ip,
+        sessions: Default::default(),
     };
 
     let on_signal = manager.clone();

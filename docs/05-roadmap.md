@@ -28,21 +28,21 @@ trois OS, docs à jour. Cocher au fur et à mesure.
 
 ## Jalon 2 — Encodage et mesures
 
-- [ ] Activer Opus par défaut (libopus disponible sur les 3 CI)
+- [x] Activer Opus par défaut (feature `opus` par défaut du binaire)
 - [ ] Rééchantillonnage propre (`rubato`) si le périphérique n'est pas à 48 kHz ; G.711 avec
       vrai filtre anti-repliement
 - [ ] Réduire la latence de capture (`BufferSize::Fixed`, réveil du thread pompe)
 - [ ] Métriques : trames, overruns, auditeurs, latence capture→envoi (`/api/metrics`)
 - [ ] Banc de mesure de latence (clic → enregistrement)
 
-## Jalon 3 — WebRTC (WHEP) avec str0m
+## Jalon 3 — WebRTC (WHEP) avec str0m ✅
 
-- [ ] Session str0m par client, socket UDP partagé, boucle tokio
-- [ ] `POST <path>` → `201` + SDP + `Location` ; `DELETE` pour fermer
-- [ ] Opus et PCMU/PCMA négociés selon `encoding` de la carte
-- [ ] Choix du backend crypto (aws-lc-rs par défaut ; rust-crypto si cmake pose problème)
-- [ ] Page HTML de test servie par Antenne (navigateur comme client WHEP)
-- [ ] `max_listeners`, expiration des sessions mortes
+- [x] Session str0m par client, boucle tokio — un socket UDP **par session** (port éphémère) ; socket partagé à évaluer si un pare-feu l'exige
+- [x] `POST <path>` → `201` + SDP + `Location` ; `DELETE` pour fermer
+- [x] Opus et PCMU/PCMA négociés selon `encoding` de la carte (seul le codec de la carte est proposé ; `406` si le client ne l'offre pas, `415` pour PCM16)
+- [x] Choix du backend crypto : **rust-crypto** (100 % Rust, rien à installer sur les trois OS)
+- [x] Page HTML de test servie par Antenne : le bouton « Écouter » de l'interface est un client WHEP (35–55 ms mesurés dans Chrome)
+- [x] `max_listeners`, expiration des sessions mortes (déconnexion ICE, 15 s sans connexion, fin du flux de la carte)
 - [ ] *(3 bis, si besoin)* transport RTP/UDP direct sans chiffrement
 
 ## Jalon 4 — Client ESP32 (prototype)

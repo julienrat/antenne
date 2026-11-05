@@ -12,21 +12,22 @@
 //! | `GET /api/status`         | état du serveur : fréquence, trame, durée       |
 //! | `GET /api/levels`         | niveaux crête par carte et par canal            |
 //! | `GET /stream/{id}`        | flux WAV PCM16 continu, pour tester (VLC…)      |
-//! | `POST <path>`             | signalisation WHEP de la carte (WebRTC, jalon 3)|
+//! | `POST <path>`             | WHEP : offre SDP → session WebRTC de la carte   |
+//! | `DELETE <path>/<id>`      | WHEP : fin de session                           |
 //!
 //! Les cartes changent pendant que le serveur tourne : le serveur ne fait que
 //! lire la liste partagée ([`SharedCards`]) ; les modifications passent par
 //! [`CardControl`], implémenté par l'application (qui possède l'audio).
 
 use std::future::Future;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 use antenne_core::{AudioFrame, CardConfig};
 use axum::Router;
-use axum::extract::{Request, State};
+use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, put};
@@ -105,6 +106,11 @@ pub struct AppState {
     pub started_at: Instant,
     pub cards: SharedCards,
     pub control: Arc<dyn CardControl>,
+    /// IP annoncée dans les candidats ICE (`server.public_ip`) ; sinon
+    /// l'interface par laquelle on joint chaque client.
+    pub public_ip: Option<IpAddr>,
+    /// Sessions WebRTC en cours.
+    pub sessions: webrtc::Sessions,
 }
 
 impl std::fmt::Debug for AppState {
@@ -152,25 +158,38 @@ pub fn router(state: AppState) -> Router {
 
 async fn whep_or_not_found(State(state): State<AppState>, request: Request) -> Response {
     let path = request.uri().path().to_string();
-    let card = state
-        .cards()
-        .into_iter()
-        .find(|c| c.config.whep_path() == path);
-    match (request.method(), card) {
-        (&Method::POST, Some(card)) => {
-            let headers = request.headers().clone();
-            let body = match axum::body::to_bytes(request.into_body(), 64 * 1024).await {
-                Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
-                Err(_) => {
-                    return (StatusCode::PAYLOAD_TOO_LARGE, "offre SDP trop grande")
-                        .into_response();
-                }
-            };
-            webrtc::whep_offer(card, headers, body).await
+    let peer = request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|c| c.0);
+    let cards = state.cards();
+
+    // `POST <path>` : nouvelle session.
+    if let Some(card) = cards.iter().find(|c| c.config.whep_path() == path) {
+        if request.method() != Method::POST {
+            return (StatusCode::METHOD_NOT_ALLOWED, "WHEP : POST attendu").into_response();
         }
-        (_, Some(_)) => (StatusCode::METHOD_NOT_ALLOWED, "WHEP : POST attendu").into_response(),
-        (_, None) => (StatusCode::NOT_FOUND, "introuvable").into_response(),
+        let card = Arc::clone(card);
+        let headers = request.headers().clone();
+        let body = match axum::body::to_bytes(request.into_body(), 64 * 1024).await {
+            Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
+            Err(_) => {
+                return (StatusCode::PAYLOAD_TOO_LARGE, "offre SDP trop grande").into_response();
+            }
+        };
+        return webrtc::whep_offer(&state, card, &headers, body, peer).await;
     }
+
+    // `DELETE <path>/<id>` : fin de session.
+    if let Some((base, session)) = path.rsplit_once('/') {
+        if let Some(card) = cards.iter().find(|c| c.config.whep_path() == base) {
+            if request.method() == Method::DELETE {
+                return webrtc::whep_delete(&state, &card.config.id, session);
+            }
+            return (StatusCode::METHOD_NOT_ALLOWED, "WHEP : DELETE attendu").into_response();
+        }
+    }
+    (StatusCode::NOT_FOUND, "introuvable").into_response()
 }
 
 /// Démarre le serveur HTTP et rend la main à l'arrêt (`shutdown` résolu).
@@ -186,9 +205,12 @@ where
         }
     });
     tracing::info!("serveur HTTP : http://{bind}  (interface : /, API : /api/cards)");
-    axum::serve(listener, router(state))
-        .with_graceful_shutdown(shutdown)
-        .await
+    axum::serve(
+        listener,
+        router(state).into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown)
+    .await
 }
 
 /// Compte un auditeur tant qu'il est vivant ; refuse au-delà de `max`.

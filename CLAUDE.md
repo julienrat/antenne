@@ -24,8 +24,8 @@ cargo lint                      # alias : clippy --workspace --all-targets -D wa
 cargo fmt --all
 cargo dev                       # alias : run avec config/antenne.example.toml
 cargo devices                   # alias : liste les entrées audio
-cargo run -p antenne --features opus -- --config config/antenne.toml run
-cargo test -p antenne-codec --features opus
+cargo run -p antenne -- --config config/antenne.toml run   # Opus inclus par défaut
+cargo test -p antenne-codec --features opus   # tests aller-retour Opus
 packaging/linux/build-appimage.sh   # dist/Antenne-<v>-x86_64.AppImage
 packaging/macos/build-dmg.sh        # sur un Mac : dist/Antenne-<v>-macos-universal.dmg
 ```
@@ -40,7 +40,7 @@ crates/antenne-core   config.rs (TOML + validate), frame.rs (AudioFrame)
 crates/antenne-audio  capture.rs (cpal), tone.rs, framer.rs, devices.rs,
                       virtual_device/{mod,pipewire,loopback}.rs
 crates/antenne-codec  lib.rs (trait Encoder, make_encoder), pcm.rs, g711.rs, opus_enc.rs
-crates/antenne-net    lib.rs (router, AppState, serve), wav.rs, webrtc.rs (stub WHEP),
+crates/antenne-net    lib.rs (router, AppState, serve), wav.rs, webrtc.rs (WHEP + sessions str0m),
                       api.rs (CRUD /api/cards), ui.rs + ui/index.html (interface web sur `/`),
                       meter.rs (vu-mètres)
 crates/antenne        main.rs, cli.rs, app.rs (orchestration), cards.rs (CardManager : cartes à chaud)
@@ -83,3 +83,7 @@ Seulement copie vers le ring buffer `rtrb` et compteurs atomiques.
 - Linux : la feature `pipewire` de cpal exige `libpipewire-0.3-dev` et `clang` (bindgen).
 - G.711 = mono 8 kHz uniquement (validé dans la config).
 - Les chemins `/health`, `/api/*`, `/stream/*` sont réservés (validation de `path`).
+- WebRTC : un socket UDP par session, candidat = `server.public_ip` ou interface vers le
+  client. Pour tester : bouton « Écouter » de l'interface (client WHEP dans le navigateur).
+- `pgrep -f`/`pkill -f` avec un motif présent dans la commande tuent le shell lui-même :
+  viser `pgrep -x antenne` ou un motif ancré (`^/chemin/…`).
