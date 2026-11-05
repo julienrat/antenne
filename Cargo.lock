@@ -130,7 +130,7 @@ dependencies = [
 
 [[package]]
 name = "antenne"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "antenne-audio",
  "antenne-codec",
@@ -145,7 +145,7 @@ dependencies = [
 
 [[package]]
 name = "antenne-audio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "antenne-core",
  "anyhow",
@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "antenne-codec"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "antenne-core",
  "opus",
@@ -165,7 +165,7 @@ dependencies = [
 
 [[package]]
 name = "antenne-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "thiserror 2.0.21",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "antenne-net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "antenne-codec",
  "antenne-core",
