@@ -187,10 +187,10 @@ impl CardManager {
             return;
         };
         drop(running.source);
-        if let (Some(vcard), Some(backend)) = (running.vcard, self.backend.as_mut()) {
-            if let Err(e) = backend.destroy(&vcard) {
-                tracing::warn!(card = %id, "suppression de la carte virtuelle : {e:#}");
-            }
+        if let (Some(vcard), Some(backend)) = (running.vcard, self.backend.as_mut())
+            && let Err(e) = backend.destroy(&vcard)
+        {
+            tracing::warn!(card = %id, "suppression de la carte virtuelle : {e:#}");
         }
     }
 

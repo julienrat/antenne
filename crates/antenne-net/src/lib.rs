@@ -181,13 +181,13 @@ async fn whep_or_not_found(State(state): State<AppState>, request: Request) -> R
     }
 
     // `DELETE <path>/<id>` : fin de session.
-    if let Some((base, session)) = path.rsplit_once('/') {
-        if let Some(card) = cards.iter().find(|c| c.config.whep_path() == base) {
-            if request.method() == Method::DELETE {
-                return webrtc::whep_delete(&state, &card.config.id, session);
-            }
-            return (StatusCode::METHOD_NOT_ALLOWED, "WHEP : DELETE attendu").into_response();
+    if let Some((base, session)) = path.rsplit_once('/')
+        && let Some(card) = cards.iter().find(|c| c.config.whep_path() == base)
+    {
+        if request.method() == Method::DELETE {
+            return webrtc::whep_delete(&state, &card.config.id, session);
         }
+        return (StatusCode::METHOD_NOT_ALLOWED, "WHEP : DELETE attendu").into_response();
     }
     (StatusCode::NOT_FOUND, "introuvable").into_response()
 }
