@@ -1,12 +1,14 @@
 # Paquets de distribution : AppImage (Linux x86_64) et DMG universel (macOS).
-# Lancement : manuel (onglet Actions) ou en poussant une étiquette `v*`, qui
-# publie aussi une release GitHub avec les deux fichiers.
+# Lancement : manuel (onglet Actions), en poussant la branche `paquets` (essai,
+# sans release) ou une étiquette `v*`, qui publie aussi une release GitHub.
 name: Paquets
 
 on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+    # Branche d'essai : construit les paquets sans publier de release.
+    branches: [paquets]
 
 permissions:
   contents: write
@@ -26,7 +28,12 @@ jobs:
           sudo apt-get install -y libpipewire-0.3-dev libasound2-dev clang cmake \
             pkg-config desktop-file-utils imagemagick libfuse2
       - name: Construction
-        run: packaging/linux/build-appimage.sh
+        run: |
+          set -o pipefail
+          packaging/linux/build-appimage.sh 2>&1 | tee build.log
+      - name: Erreurs en annotations
+        if: failure()
+        run: .github/scripts/annotate-failure.sh build.log AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: antenne-appimage
@@ -43,7 +50,12 @@ jobs:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
       - name: Construction
-        run: packaging/macos/build-dmg.sh
+        run: |
+          set -o pipefail
+          packaging/macos/build-dmg.sh 2>&1 | tee build.log
+      - name: Erreurs en annotations
+        if: failure()
+        run: .github/scripts/annotate-failure.sh build.log DMG
       - uses: actions/upload-artifact@v4
         with:
           name: antenne-dmg

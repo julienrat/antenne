@@ -54,10 +54,21 @@ jobs:
         run: brew install opus pkg-config
 
       - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-targets -- -D warnings 2>&1 | tee build.log
 
       - name: Tests
-        run: cargo test --workspace
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --workspace 2>&1 | tee build.log
+
+      - name: Erreurs en annotations
+        if: failure()
+        shell: bash
+        run: .github/scripts/annotate-failure.sh build.log "${{ runner.os }}"
 
       - name: Opus (feature)
         run: cargo test -p antenne-codec --features opus
@@ -84,4 +95,9 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends pkg-config clang libclang-dev libasound2-dev libpipewire-0.3-dev libopus-dev
-      - run: cargo +1.89 check --workspace
+      - run: |
+          set -o pipefail
+          cargo +1.89 check --workspace 2>&1 | tee build.log
+      - name: Erreurs en annotations
+        if: failure()
+        run: .github/scripts/annotate-failure.sh build.log MSRV
