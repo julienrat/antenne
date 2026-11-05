@@ -1,0 +1,16 @@
+[package]
+name = "antenne-core"
+description = "Types communs, configuration et validation d'Antenne (aucune dépendance audio ou réseau)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+toml_edit.workspace = true
+
+[lints]
+workspace = true

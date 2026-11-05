@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Antenne
+GenericName=Diffusion audio
+Comment=Cartes son virtuelles et diffusion audio faible latence vers des ESP32
+Exec=antenne
+Icon=antenne
+Terminal=true
+Categories=AudioVideo;Audio;
+Keywords=audio;stream;webrtc;esp32;pipewire;

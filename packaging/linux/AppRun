@@ -1,0 +1,40 @@
+#!/bin/sh
+# Lanceur de l'AppImage Antenne.
+#
+# Sans argument : démarre le serveur avec ~/.config/antenne/antenne.toml
+# (créé depuis l'exemple au premier lancement) et ouvre l'interface web.
+# Avec des arguments : les passe tels quels (ex. `Antenne.AppImage devices`).
+# ANTENNE_NO_BROWSER=1 empêche l'ouverture du navigateur.
+
+HERE="$(dirname "$(readlink -f "$0")")"
+BIN="$HERE/usr/bin/antenne"
+
+if [ "$#" -gt 0 ]; then
+    exec "$BIN" "$@"
+fi
+
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/antenne"
+CONF="$CONF_DIR/antenne.toml"
+if [ ! -f "$CONF" ]; then
+    mkdir -p "$CONF_DIR"
+    cp "$HERE/usr/share/antenne/antenne.example.toml" "$CONF"
+    # Copié depuis l'image (lecture seule) : l'interface doit pouvoir l'écrire.
+    chmod u+w "$CONF"
+    echo "Configuration créée : $CONF"
+fi
+
+if ! command -v pactl >/dev/null 2>&1; then
+    echo "Avertissement : pactl introuvable (paquet pulseaudio-utils ou pipewire-pulse) :" >&2
+    echo "les cartes virtuelles ne pourront pas être créées." >&2
+fi
+
+PORT="$(sed -n 's/^[[:space:]]*bind[[:space:]]*=[[:space:]]*"[^"]*:\([0-9][0-9]*\)".*/\1/p' "$CONF" | head -n 1)"
+URL="http://localhost:${PORT:-8080}/"
+echo "Configuration : $CONF"
+echo "Interface     : $URL   (Ctrl+C pour arrêter)"
+
+if [ -z "$ANTENNE_NO_BROWSER" ] && command -v xdg-open >/dev/null 2>&1; then
+    (sleep 2 && xdg-open "$URL" >/dev/null 2>&1) &
+fi
+
+exec "$BIN" --config "$CONF" run

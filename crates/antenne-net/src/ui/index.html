@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Antenne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E3E6E9; --panel:#F6F7F8; --panel-2:#ECEEF1; --ink:#1C2430; --muted:#58636F;
+  --line:#C7CCD2; --led-off:#B6BCC3; --live:#2C9A4B; --amber:#D18A0C; --clip:#CF3B3B;
+  --accent:#1F5FA8; --meter-bg:#D3D8DD; --screw:#AEB4BB;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#171B21; --panel:#222830; --panel-2:#1C2128; --ink:#E5E9EE; --muted:#8E99A5;
+    --line:#333B46; --led-off:#3A424D; --live:#44C068; --amber:#F0A82A; --clip:#F05858;
+    --accent:#6FA9EA; --meter-bg:#2B323C; --screw:#3D4651;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171B21; --panel:#222830; --panel-2:#1C2128; --ink:#E5E9EE; --muted:#8E99A5;
+  --line:#333B46; --led-off:#3A424D; --live:#44C068; --amber:#F0A82A; --clip:#F05858;
+  --accent:#6FA9EA; --meter-bg:#2B323C; --screw:#3D4651;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:24px 16px 56px}
+
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.brand h1{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:44px;line-height:1;letter-spacing:.01em}
+.brand p{margin:4px 0 0;color:var(--muted)}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mode{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:14px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{background:var(--panel-2)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--clip)}
+
+.led{width:10px;height:10px;border-radius:50%;background:var(--led-off);flex:none}
+.led.on{background:var(--live);box-shadow:0 0 0 3px color-mix(in srgb,var(--live) 22%,transparent)}
+.led.warn{background:var(--amber)}
+.led.err{background:var(--clip)}
+
+.master{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--panel);border:1px solid var(--line);border-radius:8px;margin:0 0 24px}
+.master div{padding:12px 16px;border-left:1px solid var(--line)}
+.master div:first-child{border-left:0}
+.master dt{font-size:13px;color:var(--muted)}
+.master dd{margin:2px 0 0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:24px;line-height:1.1;display:flex;align-items:center;gap:8px}
+.master dd small{font-family:"Barlow",sans-serif;font-weight:400;font-size:13px;color:var(--muted)}
+
+.rack-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 10px;gap:12px;flex-wrap:wrap}
+.rack-head h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:24px}
+.rack-head span{color:var(--muted);font-size:14px}
+.rack{display:flex;flex-direction:column;gap:6px}
+.unit{position:relative;display:grid;grid-template-columns:44px minmax(190px,1.2fr) minmax(170px,1.6fr) auto auto;align-items:center;gap:16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 40px;min-height:76px}
+.unit::before,.unit::after{content:"";position:absolute;top:0;bottom:0;width:26px;background:
+  radial-gradient(circle at 50% 22%,var(--screw) 0 4px,transparent 4.5px),
+  radial-gradient(circle at 50% 78%,var(--screw) 0 4px,transparent 4.5px),var(--panel-2)}
+.unit::before{left:0;border-right:1px solid var(--line);border-radius:4px 0 0 4px}
+.unit::after{right:0;border-left:1px solid var(--line);border-radius:0 4px 4px 0}
+.unit.off .meters,.unit.off .stats{opacity:.55}
+
+.power{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center;cursor:pointer;padding:0}
+.power:hover{border-color:var(--accent)}
+.power:disabled{cursor:progress;opacity:.6}
+.power .led{width:12px;height:12px}
+.ident{min-width:0}
+.ident strong{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:22px;line-height:1.1}
+.ident>span{color:var(--muted);font-size:13px}
+.ident .error{display:block;color:var(--clip);font-size:13px;margin-top:4px;word-break:break-word}
+.paths{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:5px}
+.path{display:inline-flex;gap:6px;align-items:baseline;border:0;background:none;padding:1px 0;cursor:pointer;font-size:13px;color:var(--ink);text-align:left;word-break:break-all}
+.path b{font-weight:500;color:var(--muted);min-width:50px}
+.path:hover code{text-decoration:underline}
+.path code{font-family:inherit}
+.path small{color:var(--muted)}
+
+.meters{display:flex;flex-direction:column;gap:5px}
+.mrow{display:grid;grid-template-columns:14px 1fr;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.meter{position:relative;height:11px;background:var(--meter-bg);border-radius:2px;overflow:hidden}
+/* Échelle linéaire en dB de −60 à 0 : vert jusqu'à −18 dB (70 %), ambre jusqu'à −6 dB (90 %). */
+.meter i{position:absolute;inset:0;background:linear-gradient(90deg,var(--live) 0 70%,var(--amber) 70% 90%,var(--clip) 90%);
+  clip-path:inset(0 calc(100% - var(--lvl,0%)) 0 0)}
+.meter::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 7px,var(--panel) 7px 9px)}
+.scale{display:flex;justify-content:space-between;margin-left:20px;font-size:11px;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(3,auto);gap:4px 18px;text-align:right;margin:0}
+.stats dt{font-size:12px;color:var(--muted)}
+.stats dd{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:20px;line-height:1}
+.stats dd small{font-family:"Barlow",sans-serif;font-size:12px;font-weight:400}
+.actions{display:flex;flex-direction:column;gap:6px}
+.lat{font-size:12px;color:var(--muted);text-align:center;white-space:nowrap}
+
+.slot{display:flex;align-items:center;justify-content:center;gap:10px;min-height:76px;border:1.5px dashed var(--line);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;width:100%}
+.slot:hover{border-color:var(--accent);color:var(--accent)}
+.slot b{font-size:22px;font-weight:500;line-height:1}
+.empty{display:flex;align-items:center;justify-content:center;min-height:76px;border:1.5px dashed var(--line);border-radius:4px;color:var(--muted);text-align:center;padding:12px}
+
+.log{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.log h2{margin:0 0 8px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:20px}
+.log ol{list-style:none;margin:0;padding:0;font-size:14px}
+.log li{display:grid;grid-template-columns:72px 1fr;gap:8px;padding:4px 0;border-top:1px solid var(--line)}
+.log li:first-child{border-top:0}
+.log time{color:var(--muted)}
+.foot{margin-top:14px;color:var(--muted);font-size:13px}
+
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:0;width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+dialog::backdrop{background:rgba(10,14,20,.45)}
+.dlg{padding:20px}
+.dlg h2{margin:0 0 4px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:26px}
+.dlg>p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.group{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.group h3{margin:0 0 10px;font-size:16px;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.field{margin-bottom:12px}
+.field>label,.field legend{display:block;font-size:14px;font-weight:500;margin-bottom:5px}
+.field input[type=text],.field input[type=number],.field select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font:inherit;color:inherit}
+.field input:disabled{opacity:.6}
+.field fieldset{border:0;margin:0;padding:0}
+.opts{display:flex;gap:16px;flex-wrap:wrap}
+.opts label{display:flex;gap:6px;align-items:center;font-weight:400;margin:0;font-size:15px}
+.opts label.dis{opacity:.5}
+.hint{font-size:13px;color:var(--muted);margin-top:4px;word-break:break-word}
+.warn-hint{font-size:13px;color:var(--amber);margin-top:6px}
+.err-msg{color:var(--clip);font-size:14px;min-height:20px;white-space:pre-line}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;position:sticky;bottom:0;background:var(--panel);padding:8px 0 0}
+[hidden]{display:none!important}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+
+@media (max-width:900px){
+  .master{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .master div:nth-child(4){border-left:0}
+  .master div:nth-child(n+4){border-top:1px solid var(--line)}
+  .unit{grid-template-columns:44px 1fr auto;grid-template-areas:"pw id act" "mt mt mt" "st st st"}
+  .power{grid-area:pw}.ident{grid-area:id}.actions{grid-area:act}.meters{grid-area:mt}.stats{grid-area:st;text-align:left;justify-content:start}
+}
+@media (max-width:560px){
+  .brand h1{font-size:36px}
+  .master{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .master div{border-left:0!important;border-top:1px solid var(--line)}
+  .master div:nth-child(-n+2){border-top:0}
+  .master div:nth-child(even){border-left:1px solid var(--line)!important}
+  .unit{padding:12px 34px;gap:12px;grid-template-areas:"pw id id" "act act act" "mt mt mt" "st st st"}
+  .unit::before,.unit::after{width:20px}
+  .actions{flex-direction:row}
+  .grid2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Antenne</h1>
+      <p>Cartes son virtuelles et diffusion unicast à faible latence</p>
+    </div>
+    <div class="top-actions">
+      <span class="mode"><span class="led warn" id="modeLed"></span><span id="modeText">Connexion…</span></span>
+      <button class="btn" id="themeBtn" type="button">Thème : auto</button>
+    </div>
+  </header>
+
+  <dl class="master" aria-label="État du serveur">
+    <div><dt>Cartes virtuelles</dt><dd><span class="led" id="vbLed"></span><span id="vbName">—</span></dd></div>
+    <div><dt>Fréquence</dt><dd class="num"><span id="rate">—</span><small>kHz</small></dd></div>
+    <div><dt>Trame</dt><dd class="num"><span id="frame">—</span><small>ms</small></dd></div>
+    <div><dt>Cartes en service</dt><dd class="num" id="running">—</dd></div>
+    <div><dt>Auditeurs</dt><dd class="num" id="listenersTotal">—</dd></div>
+    <div><dt>En service depuis</dt><dd class="num" id="uptime">—</dd></div>
+  </dl>
+
+  <section aria-labelledby="rackTitle">
+    <div class="rack-head">
+      <h2 id="rackTitle">Cartes</h2>
+      <span id="rackCount"></span>
+    </div>
+    <div class="rack" id="rack"></div>
+  </section>
+
+  <section class="log" aria-labelledby="logTitle">
+    <h2 id="logTitle">Journal</h2>
+    <ol id="log"></ol>
+  </section>
+  <p class="foot">Les réglages sont enregistrés dans le fichier de configuration TOML du serveur (l'ancienne version est gardée en <code>.bak</code>). « Écouter » lit le flux de debug dans le navigateur avec un tampon court (Web Audio) : il compte comme un auditeur ; la latence affichée est celle du lecteur.</p>
+</div>
+
+<dialog id="cardDlg" aria-labelledby="cardTitle">
+  <form class="dlg" id="cardForm" method="dialog" novalidate>
+    <h2 id="cardTitle">Ajouter une carte</h2>
+    <p id="cardSub"></p>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="fName">Nom</label>
+        <input type="text" id="fName" placeholder="Par exemple : Plateau 2" autocomplete="off" maxlength="64">
+      </div>
+      <div class="field">
+        <label for="fId">Identifiant</label>
+        <input type="text" id="fId" autocomplete="off" spellcheck="false" maxlength="32">
+        <div class="hint" id="idHint"></div>
+      </div>
+    </div>
+    <div class="opts field">
+      <label><input type="checkbox" id="fEnabled"> Carte en service</label>
+    </div>
+
+    <div class="group">
+      <h3>Audio</h3>
+      <div class="field">
+        <fieldset>
+          <legend>Canaux</legend>
+          <div class="opts">
+            <label id="lblStereo"><input type="radio" name="fCh" value="stereo"> Stéréo</label>
+            <label><input type="radio" name="fCh" value="mono"> Mono</label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="field">
+        <label for="fSrc">Source</label>
+        <select id="fSrc">
+          <option value="virtual">Carte son virtuelle créée par Antenne</option>
+          <option value="device">Entrée audio existante (micro, interface…)</option>
+          <option value="tone">Tonalité de test</option>
+        </select>
+        <div class="hint" id="srcHint"></div>
+      </div>
+      <div class="grid2" id="devFields">
+        <div class="field">
+          <label for="fDevice">Entrée audio</label>
+          <input type="text" id="fDevice" list="dlDevices" autocomplete="off" spellcheck="false" placeholder="Nom ou extrait du nom">
+          <datalist id="dlDevices"></datalist>
+        </div>
+        <div class="field">
+          <label for="fFirst">Premier canal</label>
+          <input type="number" id="fFirst" min="1" max="64" step="1">
+          <div class="hint">1 = premier canal de l'entrée.</div>
+        </div>
+      </div>
+      <div class="field" id="toneFields">
+        <label for="fFreq">Fréquence (Hz)</label>
+        <input type="number" id="fFreq" min="20" max="20000" step="1">
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Encodage du flux WebRTC</h3>
+      <div class="grid2">
+        <div class="field">
+          <label for="fCodec">Codec</label>
+          <select id="fCodec">
+            <option value="opus">Opus (recommandé)</option>
+            <option value="g711u">G.711 µ-law (PCMU)</option>
+            <option value="g711a">G.711 A-law (PCMA)</option>
+            <option value="pcm16">PCM 16 bits</option>
+          </select>
+        </div>
+        <div class="field" id="bitrateField">
+          <label for="fBitrate">Débit</label>
+          <select id="fBitrate">
+            <option value="16">16 kb/s</option>
+            <option value="24">24 kb/s</option>
+            <option value="32">32 kb/s</option>
+            <option value="48">48 kb/s</option>
+            <option value="64">64 kb/s</option>
+            <option value="96">96 kb/s</option>
+            <option value="128">128 kb/s</option>
+            <option value="160">160 kb/s</option>
+            <option value="192">192 kb/s</option>
+            <option value="256">256 kb/s</option>
+          </select>
+        </div>
+      </div>
+      <div class="opts" id="fecField">
+        <label><input type="checkbox" id="fFec"> Correction d’erreurs (FEC, utile en Wi-Fi)</label>
+      </div>
+      <div class="hint" id="codecHint"></div>
+    </div>
+
+    <div class="group">
+      <h3>Diffusion</h3>
+      <div class="grid2">
+        <div class="field">
+          <label for="fPath">Chemin WebRTC (WHEP)</label>
+          <input type="text" id="fPath" autocomplete="off" spellcheck="false">
+          <div class="hint" id="pathHint"></div>
+        </div>
+        <div class="field">
+          <label for="fMax">Auditeurs maximum</label>
+          <input type="number" id="fMax" min="1" max="64" step="1">
+        </div>
+      </div>
+      <div class="hint" id="httpHint"></div>
+    </div>
+
+    <div class="warn-hint" id="restartHint" hidden></div>
+    <div class="err-msg" id="fErr" role="alert"></div>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="cancelCard">Annuler</button>
+      <button class="btn primary" type="submit" id="saveCard">Ajouter la carte</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const S = { cards: [], status: null, levels: {}, online: null, playing: null };
+
+  /* ---------- Thème ---------- */
+  const themes = ["auto", "light", "dark"];
+  const themeNames = { auto: "auto", light: "clair", dark: "sombre" };
+  let theme = "auto";
+  try { theme = localStorage.getItem("antenne-theme") || "auto"; } catch (e) {}
+  function applyTheme() {
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = "Thème : " + themeNames[theme];
+  }
+  $("themeBtn").addEventListener("click", () => {
+    theme = themes[(themes.indexOf(theme) + 1) % themes.length];
+    try { localStorage.setItem("antenne-theme", theme); } catch (e) {}
+    applyTheme();
+  });
+  applyTheme();
+
+  /* ---------- Utilitaires ---------- */
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmtUptime = (s) => {
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    return d ? `${d} j ${h} h` : h ? `${h} h ${String(m).padStart(2, "0")}` : m ? `${m} min` : `${s} s`;
+  };
+  const running = (c) => c.status.state === "running";
+  const disabled = (c) => c.status.state === "disabled";
+  const busy = new Set();             // cartes en cours de modification
+  const nCh = (c) => (c.channels === "mono" ? 1 : 2);
+  function codec(e) {
+    switch (e.codec) {
+      case "opus": return { label: "Opus" + (e.fec ? " FEC" : ""), rate: e.bitrate_kbps };
+      case "g711u": return { label: "G.711 µ", rate: 64 };
+      case "g711a": return { label: "G.711 A", rate: 64 };
+      default: return { label: "PCM 16", rate: null };
+    }
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+  const journal = [];
+  function log(msg) {
+    journal.unshift({ t: new Date().toLocaleTimeString("fr-FR"), msg });
+    journal.length = Math.min(journal.length, 10);
+    $("log").innerHTML = journal.map((l) => `<li><time class="num">${l.t}</time><span>${esc(l.msg)}</span></li>`).join("");
+  }
+
+  async function getJSON(path) {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) throw new Error(`Erreur ${r.status} sur ${path}`);
+    return r.json();
+  }
+
+  /* ---------- Rendu ---------- */
+  function renderStatus() {
+    const st = S.status;
+    if (!st) return;
+    $("vbLed").className = "led " + (st.virtual_backend ? "on" : "");
+    $("vbName").textContent = st.virtual_backend || "aucun";
+    $("rate").textContent = (st.sample_rate / 1000).toLocaleString("fr-FR");
+    $("frame").textContent = st.frame_ms;
+    $("running").textContent = `${st.cards_running} / ${st.cards_total}`;
+    $("listenersTotal").textContent = st.listeners_total;
+    $("uptime").textContent = fmtUptime(st.uptime_s);
+  }
+
+  function pathBtn(label, path, note) {
+    const url = location.origin + path;
+    return `<button class="path" type="button" data-act="copy" data-url="${esc(url)}" title="Copier ${esc(url)}">
+      <b>${label}</b><code>${esc(path)}</code>${note ? ` <small>${note}</small>` : ""}</button>`;
+  }
+
+  function sourceText(c) {
+    if (disabled(c)) return "hors service";
+    if (!running(c)) return "en échec";
+    return "source « " + esc(c.status.source) + " »";
+  }
+
+  function unitHTML(c) {
+    const on = running(c);
+    const k = codec(c.encoding);
+    const rows = nCh(c) === 1
+      ? `<div class="mrow"><span>M</span><div class="meter" data-id="${esc(c.id)}" data-ch="0"><i></i></div></div>`
+      : `<div class="mrow"><span>G</span><div class="meter" data-id="${esc(c.id)}" data-ch="0"><i></i></div></div>
+         <div class="mrow"><span>D</span><div class="meter" data-id="${esc(c.id)}" data-ch="1"><i></i></div></div>`;
+    const playing = S.playing === c.id;
+    const isBusy = busy.has(c.id);
+    const led = on ? "on" : disabled(c) ? "" : "err";
+    const powerLabel = (c.enabled ? "Mettre hors service " : "Mettre en service ") + c.name;
+    return `<div class="unit${on ? "" : " off"}" data-id="${esc(c.id)}">
+      <button class="power" type="button" data-act="toggle" aria-pressed="${c.enabled}" aria-label="${esc(powerLabel)}" title="${esc(powerLabel)}" ${isBusy ? "disabled" : ""}><span class="led ${led}"></span></button>
+      <div class="ident">
+        <strong>${esc(c.name)}</strong>
+        <span>${nCh(c) === 1 ? "Mono" : "Stéréo"}, ${sourceText(c)}</span>
+        ${c.status.state === "failed" ? `<span class="error">${esc(c.status.error)}</span>` : ""}
+        <div class="paths">${pathBtn("HTTP", c.debug_stream, "WAV")}${pathBtn("WebRTC", c.whep_path, "jalon 3")}</div>
+      </div>
+      <div class="meters" aria-hidden="true">${rows}<div class="scale num"><span>−60</span><span>−40</span><span>−20</span><span>0 dB</span></div></div>
+      <dl class="stats">
+        <div><dt>Auditeurs</dt><dd class="num">${c.listeners}<small> / ${c.max_listeners}</small></dd></div>
+        <div><dt>${esc(k.label)}</dt><dd class="num">${k.rate != null ? `${k.rate}<small> kb/s</small>` : "—"}</dd></div>
+        <div><dt>Canaux</dt><dd class="num">${nCh(c)}</dd></div>
+      </dl>
+      <div class="actions">
+        <button class="btn${playing ? " primary" : ""}" type="button" data-act="listen" ${on ? "" : "disabled"} aria-pressed="${playing}">${playing ? "Arrêter" : "Écouter"}</button>
+        ${playing ? `<span class="lat num" id="latNow" title="Tampon du lecteur + sortie audio (hors réseau et capture)">mise en tampon…</span>` : ""}
+        <button class="btn" type="button" data-act="edit" ${isBusy ? "disabled" : ""}>Réglages</button>
+        <button class="btn danger" type="button" data-act="delete" ${isBusy ? "disabled" : ""}>Supprimer</button>
+      </div>
+    </div>`;
+  }
+
+  // On ne reconstruit le rack que si quelque chose de visible a changé
+  // (sinon les vu-mètres et le focus clavier sautent à chaque requête).
+  let lastRack = "";
+  function renderRack() {
+    const sig = JSON.stringify([S.cards, S.playing, [...busy]]);
+    if (sig === lastRack) return;
+    lastRack = sig;
+    $("rack").innerHTML = S.cards.map(unitHTML).join("") +
+      `<button class="slot" type="button" data-act="add"><b>+</b> Ajouter une carte</button>`;
+    const on = S.cards.filter(running).length;
+    $("rackCount").textContent = `${S.cards.length} carte${S.cards.length > 1 ? "s" : ""}, ${on} en service`;
+    paintMeters();
+  }
+
+  // Linéaire -> position sur une échelle en dB de −60 à 0.
+  const toPos = (v) => (v > 0 ? Math.max(0, Math.min(1, (20 * Math.log10(v) + 60) / 60)) : 0);
+  function paintMeters() {
+    document.querySelectorAll(".meter").forEach((m) => {
+      const v = S.online ? (S.levels[m.dataset.id]?.[Number(m.dataset.ch)] ?? 0) : 0;
+      m.style.setProperty("--lvl", (toPos(v) * 100).toFixed(1) + "%");
+    });
+  }
+
+  /* ---------- Actions ---------- */
+  $("rack").addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("button[data-act]");
+    if (!btn) return;
+    if (btn.dataset.act === "copy") {
+      const url = btn.dataset.url;
+      try { await navigator.clipboard.writeText(url); toast("URL copiée : " + url); }
+      catch (err) { toast(url); }
+      return;
+    }
+    if (btn.dataset.act === "add") { openCard(null); return; }
+    const unit = btn.closest(".unit");
+    if (!unit) return;
+    const card = S.cards.find((c) => c.id === unit.dataset.id);
+    if (!card) return;
+    const act = btn.dataset.act;
+    if (act === "listen") {
+      if (S.playing === card.id) stopListening();
+      else startListening(card.id);
+    } else if (act === "edit") {
+      openCard(card);
+    } else if (act === "toggle") {
+      const enabled = !card.enabled;
+      await mutate(card, () => api(`/api/cards/${encodeURIComponent(card.id)}`, "PUT", { ...toConfig(card), enabled }),
+        `${card.name} ${enabled ? "mise en service" : "mise hors service"}`);
+    } else if (act === "delete") {
+      if (btn.dataset.armed !== "1") {
+        btn.dataset.armed = "1"; btn.textContent = "Confirmer ?";
+        setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ""; btn.textContent = "Supprimer"; } }, 3000);
+        return;
+      }
+      if (S.playing === card.id) stopListening();
+      await mutate(card, () => api(`/api/cards/${encodeURIComponent(card.id)}`, "DELETE"), `${card.name} supprimée`);
+    }
+  });
+
+  /* ---------- Modifications (API) ---------- */
+  async function api(path, method, body) {
+    const r = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!r.ok) {
+      let errors = [`Erreur ${r.status}`];
+      try { const j = await r.json(); if (j.errors && j.errors.length) errors = j.errors; } catch (e) {}
+      const err = new Error(errors.join("\n")); err.errors = errors; throw err;
+    }
+    return r.status === 204 ? null : r.json();
+  }
+
+  // Réglages d'une carte, dans le format du fichier de configuration.
+  const toConfig = (c) => ({
+    id: c.id, name: c.name, enabled: c.enabled, channels: c.channels,
+    source: c.source, encoding: c.encoding, path: c.path, max_listeners: c.max_listeners,
+  });
+
+  async function mutate(card, call, okMsg) {
+    busy.add(card.id); renderRack();
+    try {
+      await call();
+      log(okMsg); toast(okMsg);
+    } catch (e) {
+      toast(e.message.split("\n")[0]);
+      log(`Échec sur ${card.name} : ${e.message.replace(/\n/g, " ; ")}`);
+    } finally {
+      busy.delete(card.id);
+      await poll();
+      renderRack();
+    }
+  }
+
+  /* ---------- Fenêtre de réglages ---------- */
+  const dlg = $("cardDlg");
+  let editing = null;                 // carte modifiée, ou null pour un ajout
+  let idTouched = false;
+  let pathTouched = false;
+  const slug = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+  const channelsValue = () => document.querySelector("input[name=fCh]:checked")?.value || "stereo";
+  const currentId = () => (editing ? editing.id : $("fId").value.trim());
+  const defaultPath = () => `/whep/${currentId() || "<id>"}`;
+
+  async function loadDevices() {
+    try {
+      const names = await getJSON("/api/devices");
+      $("dlDevices").innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join("");
+    } catch (e) { /* liste facultative */ }
+  }
+
+  function openCard(card) {
+    editing = card;
+    const src = card ? card.source : { kind: "virtual" };
+    const enc = card ? card.encoding : { codec: "opus", bitrate_kbps: 96, fec: false };
+    $("cardTitle").textContent = card ? `Réglages de « ${card.name} »` : "Ajouter une carte";
+    $("cardSub").textContent = card
+      ? "Les changements sont appliqués tout de suite et enregistrés dans le fichier de configuration."
+      : "Avec une source virtuelle, la carte apparaît comme sortie audio dans vos applications.";
+    $("saveCard").textContent = card ? "Enregistrer" : "Ajouter la carte";
+    $("fName").value = card ? card.name : "";
+    $("fId").value = card ? card.id : "";
+    $("fId").disabled = !!card;
+    $("fEnabled").checked = card ? card.enabled : true;
+    document.querySelector(`input[name=fCh][value="${card ? card.channels : "stereo"}"]`).checked = true;
+    $("fSrc").value = src.kind;
+    $("fDevice").value = src.kind === "device" ? src.device : "";
+    $("fFirst").value = src.kind === "device" ? src.first_channel + 1 : 1;
+    $("fFreq").value = src.kind === "tone" ? src.frequency_hz : 440;
+    $("fCodec").value = enc.codec;
+    $("fBitrate").value = String(enc.codec === "opus" ? enc.bitrate_kbps : 96);
+    if (!$("fBitrate").value) {
+      // Débit saisi à la main dans le fichier : on l'ajoute à la liste.
+      $("fBitrate").insertAdjacentHTML("beforeend", `<option value="${enc.bitrate_kbps}">${enc.bitrate_kbps} kb/s</option>`);
+      $("fBitrate").value = String(enc.bitrate_kbps);
+    }
+    $("fFec").checked = enc.codec === "opus" && enc.fec;
+    $("fPath").value = card && card.path ? card.path : "";
+    $("fMax").value = card ? card.max_listeners : 4;
+    idTouched = !!card;
+    pathTouched = !!(card && card.path);
+    $("fErr").textContent = "";
+    syncForm();
+    loadDevices();
+    dlg.showModal();
+    $("fName").focus();
+  }
+
+  function syncForm() {
+    if (!editing && !idTouched) $("fId").value = slug($("fName").value);
+    const id = currentId();
+    $("idHint").textContent = editing ? "Ne peut plus être modifié." : "Sert dans les adresses : a-z, 0-9, - et _.";
+    if (!pathTouched) $("fPath").value = "";
+    $("fPath").placeholder = defaultPath();
+    $("pathHint").textContent = `Laisser vide pour ${defaultPath()}.`;
+    $("httpHint").textContent = `Flux HTTP de debug (WAV PCM 16 bits, toujours actif) : ${location.origin}/stream/${id || "<id>"}`;
+
+    const src = $("fSrc").value;
+    $("devFields").hidden = src !== "device";
+    $("toneFields").hidden = src !== "tone";
+    $("srcHint").textContent = src === "virtual"
+      ? `Sortie audio « ${$("fName").value.trim() || "…"} » (antenne_${id || "<id>"}) : jouez-y du son depuis n'importe quelle application.`
+      : src === "device" ? "Capture une entrée qui existe déjà sur cet ordinateur." : "Génère une sinusoïde, pour tester sans matériel.";
+
+    const codec = $("fCodec").value;
+    const g711 = codec === "g711u" || codec === "g711a";
+    const stereo = document.querySelector("input[name=fCh][value=stereo]");
+    if (g711 && stereo.checked) document.querySelector("input[name=fCh][value=mono]").checked = true;
+    stereo.disabled = g711;
+    $("lblStereo").classList.toggle("dis", g711);
+    $("bitrateField").hidden = codec !== "opus";
+    $("fecField").hidden = codec !== "opus";
+    $("codecHint").textContent = {
+      opus: "Faible latence et bon rendu, natif WebRTC.",
+      g711u: "Mono 8 kHz, très léger à décoder pour les petits ESP32.",
+      g711a: "Mono 8 kHz, très léger à décoder pour les petits ESP32.",
+      pcm16: "Non compressé : gros débit, hors WebRTC standard.",
+    }[codec] + " L'encodage sert au WebRTC (jalon 3) ; le flux HTTP de debug reste en WAV.";
+
+    // Prévenir quand l'enregistrement va couper le son de la carte.
+    let restart = "";
+    if (editing) {
+      const ch = channelsValue();
+      const nameChanged = $("fName").value.trim() !== editing.name;
+      const srcChanged = src !== editing.source.kind
+        || (src === "device" && ($("fDevice").value.trim() !== editing.source.device || Number($("fFirst").value) - 1 !== editing.source.first_channel))
+        || (src === "tone" && Number($("fFreq").value) !== editing.source.frequency_hz);
+      if (ch !== editing.channels || srcChanged || $("fEnabled").checked !== editing.enabled || (src === "virtual" && nameChanged)) {
+        restart = "La carte va redémarrer : les auditeurs seront déconnectés" +
+          (editing.source.kind === "virtual" ? " et les applications qui jouent vers sa sortie audio devront s’y reconnecter." : ".");
+      }
+    }
+    $("restartHint").textContent = restart;
+    $("restartHint").hidden = !restart;
+  }
+
+  ["fName", "fEnabled", "fSrc", "fDevice", "fFirst", "fFreq", "fCodec"].forEach((id) => $(id).addEventListener("input", syncForm));
+  document.querySelectorAll("input[name=fCh]").forEach((r) => r.addEventListener("change", syncForm));
+  $("fId").addEventListener("input", () => { idTouched = true; syncForm(); });
+  $("fPath").addEventListener("input", () => { pathTouched = $("fPath").value.trim() !== ""; });
+  $("cancelCard").addEventListener("click", () => dlg.close());
+
+  function readForm() {
+    const src = $("fSrc").value;
+    const source = src === "device"
+      ? { kind: "device", device: $("fDevice").value.trim(), first_channel: Math.max(0, Number($("fFirst").value) - 1) }
+      : src === "tone" ? { kind: "tone", frequency_hz: Number($("fFreq").value) } : { kind: "virtual" };
+    const codec = $("fCodec").value;
+    const encoding = codec === "opus"
+      ? { codec, bitrate_kbps: Number($("fBitrate").value), fec: $("fFec").checked }
+      : { codec };
+    const path = $("fPath").value.trim();
+    return {
+      id: currentId(),
+      name: $("fName").value.trim(),
+      enabled: $("fEnabled").checked,
+      channels: channelsValue(),
+      source, encoding,
+      path: path && path !== `/whep/${currentId()}` ? path : null,
+      max_listeners: Number($("fMax").value),
+    };
+  }
+
+  $("cardForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const err = (m) => { $("fErr").textContent = m; };
+    const body = readForm();
+    if (!body.name) return err("Donnez un nom à la carte.");
+    if (!/^[a-z0-9_-]{1,32}$/.test(body.id)) return err("Identifiant invalide : 1 à 32 caractères parmi a-z, 0-9, - et _.");
+    if (!editing && S.cards.some((c) => c.id === body.id)) return err("Une carte porte déjà cet identifiant.");
+    if (!Number.isInteger(body.max_listeners) || body.max_listeners < 1) return err("Auditeurs maximum : un nombre entier, au moins 1.");
+    if (body.source.kind === "device" && !body.source.device) return err("Indiquez l'entrée audio à capturer.");
+
+    const save = $("saveCard");
+    const label = save.textContent;
+    save.disabled = true; save.textContent = "Enregistrement…"; err("");
+    if (editing) busy.add(editing.id);
+    try {
+      if (editing) {
+        if (S.playing === editing.id && $("restartHint").hidden === false) stopListening();
+        await api(`/api/cards/${encodeURIComponent(editing.id)}`, "PUT", body);
+      } else {
+        await api("/api/cards", "POST", body);
+      }
+      dlg.close();
+      const msg = editing ? `Réglages de ${body.name} enregistrés` : `Carte ajoutée : ${body.name}`;
+      log(msg); toast(msg);
+    } catch (e) {
+      err(e.message);
+    } finally {
+      if (editing) busy.delete(editing.id);
+      save.disabled = false; save.textContent = label;
+      await poll();
+      renderRack();
+    }
+  });
+
+  /* ---------- Lecture faible latence ----------
+     Le flux WAV est lu avec fetch, converti en float et joué par la Web Audio
+     API avec un tampon court et adaptatif : l'élément <audio> accumulerait
+     plusieurs secondes de tampon sans qu'on puisse le régler. */
+
+  // Tampon circulaire partagé par l'AudioWorklet et le repli ScriptProcessor.
+  const RING_SRC = `
+  class Ring {
+    constructor(rate, channels) {
+      this.rate = rate; this.ch = channels;
+      this.cap = rate * 2;                          // 2 s au plus
+      this.data = new Float32Array(this.cap * channels);
+      this.r = 0; this.n = 0;
+      this.target = Math.round(rate * 0.04);        // réserve avant de jouer : 40 ms
+      this.maxTarget = Math.round(rate * 0.3);
+      this.primed = false; this.underruns = 0;
+    }
+    push(buf) {
+      const ch = this.ch, frames = buf.length / ch;
+      for (let i = 0; i < frames; i++) {
+        if (this.n === this.cap) { this.r = (this.r + 1) % this.cap; this.n--; }
+        const w = ((this.r + this.n) % this.cap) * ch;
+        for (let c = 0; c < ch; c++) this.data[w + c] = buf[i * ch + c];
+        this.n++;
+      }
+      // Trop d'avance (rafale réseau, dérive d'horloge) : on revient à la cible.
+      if (this.n > this.target * 2) this.skipTo(this.target);
+    }
+    skipTo(frames) {
+      const drop = this.n - frames;
+      if (drop > 0) { this.r = (this.r + drop) % this.cap; this.n -= drop; }
+    }
+    read(left, right) {
+      const len = left.length, ch = this.ch;
+      if (!this.primed) {
+        if (this.n < this.target) { left.fill(0); right.fill(0); return; }
+        // Retard accumulé pendant l'initialisation du lecteur : on le jette.
+        this.skipTo(this.target);
+        this.primed = true;
+      }
+      if (this.n < len) {
+        // Sous-alimentation : silence, et un peu plus de réserve ensuite.
+        this.primed = false; this.underruns++;
+        this.target = Math.min(this.maxTarget, Math.round(this.target * 1.25));
+        left.fill(0); right.fill(0); return;
+      }
+      for (let i = 0; i < len; i++) {
+        const b = this.r * ch;
+        left[i] = this.data[b];
+        right[i] = ch > 1 ? this.data[b + 1] : this.data[b];
+        this.r = (this.r + 1) % this.cap;
+      }
+      this.n -= len;
+    }
+    stats() { return { buffered: this.n / this.rate, target: this.target / this.rate, underruns: this.underruns }; }
+  }`;
+  const WORKLET_SRC = RING_SRC + `
+  class AntennePlayer extends AudioWorkletProcessor {
+    constructor(options) {
+      super();
+      this.ring = new Ring(sampleRate, options.processorOptions.channels);
+      this.port.onmessage = (e) => this.ring.push(e.data);
+      this.tick = 0;
+    }
+    process(_inputs, outputs) {
+      const out = outputs[0];
+      this.ring.read(out[0], out[1] || out[0]);
+      if (++this.tick % 100 === 0) this.port.postMessage(this.ring.stats());
+      return true;
+    }
+  }
+  registerProcessor("antenne-player", AntennePlayer);`;
+  const Ring = new Function(RING_SRC + "\nreturn Ring;")();
+
+  const player = { id: null, ctx: null, abort: null };
+
+  function stopListening(silent) {
+    if (!player.id) return;
+    const card = S.cards.find((c) => c.id === player.id);
+    player.abort.abort();             // ferme la connexion HTTP : libère la place d'auditeur
+    player.ctx.close().catch(() => {});
+    player.id = null; player.ctx = null; player.abort = null;
+    S.playing = null;
+    if (!silent) log(`Écoute arrêtée${card ? " : " + card.name : ""}`);
+    renderRack();
+  }
+
+  function showStats(st) {
+    const el = $("latNow");
+    if (!el || !player.ctx) return;
+    const ms = Math.round((st.buffered + (player.ctx.baseLatency || 0) + (player.ctx.outputLatency || 0)) * 1000);
+    el.textContent = `≈ ${ms} ms` + (st.underruns ? ` · ${st.underruns} coupure${st.underruns > 1 ? "s" : ""}` : "");
+  }
+
+  // Lit au moins `n` octets (l'en-tête WAV) ; renvoie [octets, terminé].
+  async function readAtLeast(reader, n) {
+    let acc = new Uint8Array(0);
+    while (acc.length < n) {
+      const { value, done } = await reader.read();
+      if (done) return [acc, true];
+      const next = new Uint8Array(acc.length + value.length);
+      next.set(acc); next.set(value, acc.length); acc = next;
+    }
+    return [acc, false];
+  }
+
+  async function startListening(id) {
+    stopListening(true);
+    const card = S.cards.find((c) => c.id === id);
+    let ctx;
+    try {
+      // Créé pendant le clic (autorisation de lecture), à la fréquence du serveur.
+      ctx = new AudioContext({ sampleRate: S.status?.sample_rate || 48000, latencyHint: "interactive" });
+    } catch (e) {
+      toast(`Lecture impossible : ${e.message}`);
+      return;
+    }
+    const abort = new AbortController();
+    Object.assign(player, { id, ctx, abort });
+    S.playing = id;
+    renderRack();
+    try {
+      const resp = await fetch(`/stream/${encodeURIComponent(id)}`, { signal: abort.signal, cache: "no-store" });
+      if (resp.status === 503) throw new Error("nombre maximal d’auditeurs atteint");
+      if (!resp.ok) throw new Error(`erreur ${resp.status}`);
+      const reader = resp.body.getReader();
+      let [bytes, done] = await readAtLeast(reader, 44);
+      if (done) throw new Error("flux vide");
+      const head = new DataView(bytes.buffer, 0, 44);
+      const channels = head.getUint16(22, true), rate = head.getUint32(24, true);
+      if (rate !== ctx.sampleRate) throw new Error(`le navigateur ne lit pas en ${rate} Hz`);
+
+      let push;
+      if (ctx.audioWorklet) {
+        const url = URL.createObjectURL(new Blob([WORKLET_SRC], { type: "text/javascript" }));
+        try { await ctx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+        const node = new AudioWorkletNode(ctx, "antenne-player", { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { channels } });
+        node.port.onmessage = (e) => showStats(e.data);
+        node.connect(ctx.destination);
+        push = (buf) => node.port.postMessage(buf, [buf.buffer]);
+      } else {
+        // Page ouverte en http:// depuis une autre machine : pas d'AudioWorklet.
+        const ring = new Ring(ctx.sampleRate, channels);
+        const node = ctx.createScriptProcessor(1024, 0, 2);
+        let tick = 0;
+        node.onaudioprocess = (e) => {
+          ring.read(e.outputBuffer.getChannelData(0), e.outputBuffer.getChannelData(1));
+          if (++tick % 12 === 0) showStats(ring.stats());
+        };
+        node.connect(ctx.destination);
+        push = (buf) => ring.push(buf);
+      }
+      await ctx.resume();
+      log(`Écoute dans le navigateur : ${card.name}`);
+
+      // PCM 16 bits little-endian entrelacé -> float ; un échantillon peut
+      // être coupé entre deux paquets, d'où le report `carry`.
+      const frameBytes = 2 * channels;
+      let carry = bytes.subarray(44);
+      for (;;) {
+        const usable = carry.length - (carry.length % frameBytes);
+        if (usable) {
+          const dv = new DataView(carry.buffer, carry.byteOffset, usable);
+          const out = new Float32Array(usable / 2);
+          for (let i = 0; i < out.length; i++) out[i] = dv.getInt16(i * 2, true) / 32768;
+          push(out);
+        }
+        const rest = carry.subarray(usable);
+        const { value, done: end } = await reader.read();
+        if (end) break;
+        if (rest.length) { const m = new Uint8Array(rest.length + value.length); m.set(rest); m.set(value, rest.length); carry = m; }
+        else carry = value;
+      }
+      if (player.id === id) {
+        stopListening(true);
+        toast("Flux terminé (carte modifiée ou serveur arrêté)");
+        log(`Flux terminé : ${card.name}`);
+      }
+    } catch (e) {
+      if (e.name === "AbortError" || player.id !== id) return;
+      stopListening(true);
+      toast(`Écoute impossible : ${e.message}`);
+      log(`Échec de l'écoute de ${card.name} : ${e.message}`);
+    }
+  }
+
+  /* ---------- Rafraîchissement ---------- */
+  function setOnline(ok) {
+    if (S.online === ok) return;
+    S.online = ok;
+    $("modeLed").className = "led " + (ok ? "on" : "err");
+    $("modeText").textContent = ok ? "Connecté au serveur" : "Serveur injoignable, nouvel essai…";
+    log(ok ? "Connecté au serveur Antenne" : "Connexion au serveur perdue");
+    paintMeters();
+  }
+
+  function diffCards(prev, next) {
+    for (const c of next) {
+      const p = prev.find((x) => x.id === c.id);
+      if (!p) continue;
+      if (c.listeners !== p.listeners) {
+        log(`${c.name} : ${c.listeners > p.listeners ? "un auditeur s’est connecté" : "un auditeur s’est déconnecté"} (${c.listeners})`);
+      }
+    }
+  }
+
+  async function poll() {
+    try {
+      const [cards, status] = await Promise.all([getJSON("/api/cards"), getJSON("/api/status")]);
+      if (S.online) diffCards(S.cards, cards);
+      else if (S.online === null) {
+        const failed = cards.filter((c) => !running(c));
+        failed.forEach((c) => log(`${c.name} hors service : ${c.status.error}`));
+      }
+      S.cards = cards; S.status = status;
+      setOnline(true);
+      renderStatus(); renderRack();
+    } catch (e) {
+      setOnline(false);
+    }
+  }
+
+  let levelsBusy = false;
+  async function pollLevels() {
+    if (levelsBusy || !S.online || document.hidden) return;
+    levelsBusy = true;
+    try { S.levels = await getJSON("/api/levels"); paintMeters(); }
+    catch (e) { /* la boucle principale signale la perte de connexion */ }
+    finally { levelsBusy = false; }
+  }
+
+  poll();
+  setInterval(poll, 1000);
+  setInterval(pollLevels, 80);
+})();
+</script>
+</body>
+</html>

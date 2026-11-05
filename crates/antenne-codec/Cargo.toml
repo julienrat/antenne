@@ -1,0 +1,21 @@
+[package]
+name = "antenne-codec"
+description = "Encodeurs audio d'Antenne : PCM16, G.711 (µ/A-law), Opus (option)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+# Opus via libopus (crate `opus`). Nécessite libopus (pkg-config) ou cmake +
+# un compilateur C pour la construire. Voir docs/03-plateformes.md.
+opus = ["dep:opus"]
+
+[dependencies]
+antenne-core.workspace = true
+thiserror.workspace = true
+opus = { workspace = true, optional = true }
+
+[lints]
+workspace = true

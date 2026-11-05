@@ -1,0 +1,22 @@
+/target/
+**/*.rs.bk
+
+# Config locale (copier config/antenne.example.toml)
+/config/antenne.toml
+
+# Enregistrements de test
+*.wav
+*.opus
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# Paquets construits (packaging/*)
+/dist/
+
+# Sauvegardes écrites par l'interface web
+*.toml.bak
+*.toml.tmp

@@ -1,0 +1,31 @@
+[package]
+name = "antenne"
+description = "Antenne : cartes son virtuelles et diffusion unicast faible latence (Linux, macOS, Windows)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+default-run = "antenne"
+
+[[bin]]
+name = "antenne"
+path = "src/main.rs"
+
+[features]
+default = []
+# Active l'encodeur Opus (libopus). `cargo run -p antenne --features opus -- …`
+opus = ["antenne-codec/opus"]
+
+[dependencies]
+antenne-core.workspace = true
+antenne-audio.workspace = true
+antenne-codec.workspace = true
+antenne-net.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

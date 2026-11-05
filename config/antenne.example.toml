@@ -1,0 +1,59 @@
+# Antenne — configuration d'exemple
+#
+# Copier ce fichier en config/antenne.toml (ignoré par git) puis l'adapter.
+# Vérifier un fichier :   cargo run -p antenne -- --config config/antenne.toml check
+# Lancer :                cargo run -p antenne -- --config config/antenne.toml run
+
+[server]
+# Adresse d'écoute : API, signalisation WebRTC (WHEP) et flux de debug.
+bind = "0.0.0.0:8080"
+# IP annoncée aux ESP32 dans les candidats ICE (si plusieurs interfaces).
+# public_ip = "192.168.1.10"
+
+[audio]
+sample_rate = 48000   # Hz, fréquence interne du pipeline (natif Opus)
+frame_ms = 10         # durée d'une trame : 10 ms = faible latence
+ring_buffer_ms = 200  # tampon callback audio -> pipeline
+
+[platform]
+# "auto"     : Linux -> PipeWire ; macOS / Windows -> loopback
+# "pipewire" : Linux, crée un null sink PipeWire par carte
+# "loopback" : répartit les cartes sur les canaux d'un pilote de bouclage
+virtual_backend = "auto"
+# Pilote de bouclage multicanal (macOS / Windows), extrait du nom suffisant :
+loopback_device = "BlackHole 16ch"
+# Windows, exemple : loopback_device = "CABLE Output"
+
+# --- Cartes -----------------------------------------------------------------
+# Une section [[card]] par carte son virtuelle / flux diffusé.
+#   channels : "mono" | "stereo"
+#   source   : { kind = "virtual" }                         carte créée par Antenne
+#              { kind = "device", device = "…", first_channel = 0 }  entrée existante
+#              { kind = "tone", frequency_hz = 440.0 }      générateur de test
+#   encoding : { codec = "opus", bitrate_kbps = 96, fec = false }
+#              { codec = "g711u" } | { codec = "g711a" }    (mono uniquement)
+#              { codec = "pcm16" }                          (hors WebRTC standard)
+#   path     : chemin WHEP pour les clients WebRTC (défaut : /whep/<id>)
+
+[[card]]
+id = "carte1"
+name = "Antenne Carte 1"
+channels = "stereo"
+source = { kind = "virtual" }
+encoding = { codec = "opus", bitrate_kbps = 96 }
+path = "/whep/carte1"
+max_listeners = 2
+
+[[card]]
+id = "carte2"
+name = "Antenne Carte 2"
+channels = "mono"
+source = { kind = "virtual" }
+encoding = { codec = "opus", bitrate_kbps = 48, fec = true }
+
+[[card]]
+id = "test"
+name = "Tonalité de test"
+channels = "mono"
+source = { kind = "tone", frequency_hz = 440.0 }
+encoding = { codec = "g711u" }

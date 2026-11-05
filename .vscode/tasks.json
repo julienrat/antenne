@@ -1,0 +1,90 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cargo build",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["build", "--workspace"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "cargo test",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["test", "--workspace"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "cargo clippy (strict)",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["clippy", "--workspace", "--all-targets", "--", "-D", "warnings"],
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "cargo fmt",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["fmt", "--all"],
+      "problemMatcher": []
+    },
+    {
+      "label": "antenne: check config",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["run", "-p", "antenne", "--", "--config", "${input:configFile}", "check"],
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "antenne: run",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["run", "-p", "antenne", "--", "--config", "${input:configFile}", "run"],
+      "isBackground": false,
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "antenne: run (avec Opus)",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["run", "-p", "antenne", "--features", "opus", "--", "--config", "${input:configFile}", "run"],
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "antenne: lister les entrées audio",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["run", "-p", "antenne", "--", "devices"],
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "écouter carte1 (ffplay)",
+      "type": "shell",
+      "command": "ffplay",
+      "args": ["-nodisp", "-fflags", "nobuffer", "-flags", "low_delay", "http://localhost:8080/stream/carte1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "préparer config locale",
+      "type": "shell",
+      "linux": { "command": "cp -n config/antenne.example.toml config/antenne.toml" },
+      "osx": { "command": "cp -n config/antenne.example.toml config/antenne.toml" },
+      "windows": {
+        "command": "if (-not (Test-Path config/antenne.toml)) { Copy-Item config/antenne.example.toml config/antenne.toml }"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "configFile",
+      "type": "pickString",
+      "description": "Fichier de configuration",
+      "options": ["config/antenne.example.toml", "config/antenne.toml"],
+      "default": "config/antenne.example.toml"
+    }
+  ]
+}

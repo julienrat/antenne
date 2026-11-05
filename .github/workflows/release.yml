@@ -1,0 +1,65 @@
+# Paquets de distribution : AppImage (Linux x86_64) et DMG universel (macOS).
+# Lancement : manuel (onglet Actions) ou en poussant une étiquette `v*`, qui
+# publie aussi une release GitHub avec les deux fichiers.
+name: Paquets
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    name: AppImage (Linux x86_64)
+    # Distribution ancienne : l'AppImage exige la glibc de la machine de build.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Dépendances système
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpipewire-0.3-dev libasound2-dev clang cmake \
+            pkg-config desktop-file-utils imagemagick libfuse2
+      - name: Construction
+        run: packaging/linux/build-appimage.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: antenne-appimage
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+  dmg:
+    name: DMG (macOS universel)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Construction
+        run: packaging/macos/build-dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: antenne-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  release:
+    name: Release GitHub
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [appimage, dmg]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

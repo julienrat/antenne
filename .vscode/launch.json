@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Antenne : run (config d'exemple)",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin=antenne", "--package=antenne"],
+        "filter": { "name": "antenne", "kind": "bin" }
+      },
+      "args": ["--config", "config/antenne.example.toml", "run"],
+      "cwd": "${workspaceFolder}",
+      "env": { "RUST_LOG": "info,antenne=debug", "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "Antenne : run (config locale)",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin=antenne", "--package=antenne"],
+        "filter": { "name": "antenne", "kind": "bin" }
+      },
+      "args": ["--config", "config/antenne.toml", "run"],
+      "cwd": "${workspaceFolder}",
+      "env": { "RUST_LOG": "info,antenne=debug", "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "Antenne : devices",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin=antenne", "--package=antenne"],
+        "filter": { "name": "antenne", "kind": "bin" }
+      },
+      "args": ["devices"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Tests : antenne-core",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=antenne-core"],
+        "filter": { "name": "antenne_core", "kind": "lib" }
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Windows (MSVC) : run, débogueur Visual Studio",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "preLaunchTask": "cargo build",
+      "program": "${workspaceFolder}/target/debug/antenne.exe",
+      "args": ["--config", "config/antenne.example.toml", "run"],
+      "cwd": "${workspaceFolder}",
+      "environment": [{ "name": "RUST_LOG", "value": "info,antenne=debug" }],
+      "console": "integratedTerminal"
+    }
+  ]
+}

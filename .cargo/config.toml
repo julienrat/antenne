@@ -1,0 +1,7 @@
+[alias]
+# cargo dev      -> lance Antenne avec la config d'exemple
+dev = "run -p antenne -- --config config/antenne.example.toml run"
+# cargo devices  -> liste les périphériques d'entrée audio vus par cpal
+devices = "run -p antenne -- devices"
+# cargo lint     -> clippy strict, comme la CI
+lint = "clippy --workspace --all-targets -- -D warnings"

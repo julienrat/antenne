@@ -1,0 +1,43 @@
+{
+  // --- Rust -----------------------------------------------------------------
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.check.allTargets": true,
+  "rust-analyzer.cargo.features": [],
+  // Décommenter pour que l'analyse inclue Opus (nécessite libopus / cmake) :
+  // "rust-analyzer.cargo.features": ["antenne/opus"],
+  "rust-analyzer.imports.granularity.group": "module",
+  "rust-analyzer.inlayHints.chainingHints.enable": true,
+  "rust-analyzer.lens.enable": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true,
+    "editor.rulers": [100]
+  },
+
+  // --- TOML -----------------------------------------------------------------
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml",
+    "editor.formatOnSave": false
+  },
+  "evenBetterToml.formatter.alignComments": true,
+
+  // --- Fichiers -------------------------------------------------------------
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/target": true
+  },
+  "files.watcherExclude": {
+    "**/target/**": true
+  },
+  "search.exclude": {
+    "**/target": true,
+    "**/Cargo.lock": true
+  },
+
+  // --- Terminal : variables utiles par défaut --------------------------------
+  "terminal.integrated.env.linux": { "RUST_LOG": "info,antenne=debug" },
+  "terminal.integrated.env.osx": { "RUST_LOG": "info,antenne=debug" },
+  "terminal.integrated.env.windows": { "RUST_LOG": "info,antenne=debug" }
+}
