@@ -1,103 +1,171 @@
 # Antenne
 
-Cartes son virtuelles + diffusion audio **unicast faible latence** vers des **ESP32**.
-Un seul programme Rust, pour **Linux**, **macOS** et **Windows**.
+**Cartes son virtuelles et diffusion audio à faible latence vers des ESP32.**
+Un seul programme, écrit en Rust, pour Linux, macOS et Windows, piloté depuis une page web.
+
+[![CI](https://github.com/julienrat/antenne/actions/workflows/ci.yml/badge.svg)](https://github.com/julienrat/antenne/actions/workflows/ci.yml)
+
+![Interface d'Antenne : cinq cartes avec vu-mètres, auditeurs et codec](docs/images/interface-clair.png)
 
 ```
-Applications ──► Antenne Carte 1 ──┐                    ┌──► ESP32 salon
-                 Antenne Carte 2 ──┼──► Antenne ──Wi-Fi─┼──► ESP32 cuisine
-                 Antenne Carte 3 ──┘   (capture,        └──► ESP32 atelier
-                                        encodage, WebRTC)
+Applications ──► Salon    ──┐                      ┌──► ESP32 salon
+                 Cuisine  ──┼──► Antenne ──Wi-Fi───┼──► ESP32 cuisine
+                 Atelier  ──┘   capture, encodage, └──► navigateur
+                                WebRTC (WHEP)
 ```
 
-> **État** : jalon 0 (socle). Capture, cartes virtuelles Linux, G.711/PCM et flux HTTP de
-> test sont en place ; WebRTC arrive au jalon 3. Voir [la roadmap](docs/05-roadmap.md).
+Antenne crée **une sortie audio par pièce** (« Salon », « Cuisine »…). Toute application
+peut y jouer du son, comme vers une vraie carte son. Antenne capture chaque sortie, l'encode
+et la diffuse **en unicast** à chaque client qui s'y abonne : un ESP32 relié à une enceinte,
+ou un simple navigateur.
 
-## Démarrer
+## Ce qu'il sait faire
 
-### 0. Si un dossier `ide-config/` est présent
+- **Plusieurs cartes son virtuelles**, créées et supprimées automatiquement sous Linux
+  (PipeWire). Sous macOS et Windows, elles s'appuient sur un pilote de bouclage
+  (BlackHole, VB-CABLE).
+- **Une adresse WebRTC par carte** (`/whep/salon`), en mono ou en stéréo, en Opus ou en G.711.
+  Le WebRTC est mesuré à **35–55 ms** de latence dans un navigateur en réseau local.
+- **Interface web** : état des cartes, vu-mètres, écoute directe, réglages et ajout de cartes.
+  Les changements s'appliquent **sans redémarrer** et sont enregistrés dans le fichier de
+  configuration.
+- **Autres sources** possibles pour une carte : une entrée existante (micro, interface audio)
+  ou une tonalité de test.
+- **Flux HTTP WAV** par carte pour déboguer avec VLC ou ffplay.
 
-Il contient les fichiers cachés (`.vscode/`, `.cargo/`, `.claude/`, `.github/`) livrés à part.
-Les mettre en place une fois : `bash scripts/install-ide-config.sh`.
+| Thème sombre | Réglages d'une carte | Sur téléphone |
+|:---:|:---:|:---:|
+| ![Thème sombre](docs/images/interface-sombre.png) | ![Fenêtre de réglages](docs/images/reglages-carte.png) | ![Vue téléphone](docs/images/mobile.png) |
 
-### 1. Préparer la machine
+Le guide complet de l'interface est dans [docs/06-interface.md](docs/06-interface.md).
 
-| OS | Commande |
-|----|----------|
-| Linux (Debian/Ubuntu/Mint) | `bash scripts/setup-linux.sh` |
-| macOS | `bash scripts/setup-macos.sh` |
-| Windows | `powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1` |
+## Installer
 
-### 2. Ouvrir dans VSCode
+### Linux : AppImage
+
+Télécharger `Antenne-<version>-x86_64.AppImage`, la rendre exécutable, puis la lancer :
 
 ```sh
-code .
+chmod +x Antenne-*-x86_64.AppImage
+./Antenne-*-x86_64.AppImage
 ```
 
-Accepter les **extensions recommandées** (rust-analyzer, CodeLLDB, Even Better TOML, Claude Code…).
-Sous Windows, ajouter `ms-vscode.cpptools` pour le débogueur Visual Studio.
+Au premier lancement, la configuration est créée dans `~/.config/antenne/antenne.toml` et
+l'interface s'ouvre dans le navigateur. Les cartes virtuelles demandent `pactl`, fourni par
+`pipewire-pulse` ou `pulseaudio-utils`.
 
-### 3. Compiler, tester, lancer
+### macOS : DMG
+
+Ouvrir `Antenne-<version>-macos-universal.dmg` et glisser **Antenne.app** dans Applications.
+Au premier lancement, faire **clic droit > Ouvrir** : l'application n'est pas notarisée par
+Apple. Pour les cartes virtuelles, installer [BlackHole 16ch](https://existential.audio/blackhole/).
+Le fichier `LISEZMOI.txt` du DMG donne le détail.
+
+Les paquets sont produits par le workflow [Paquets](.github/workflows/release.yml) :
+lancement manuel depuis l'onglet *Actions*, ou automatique sur une étiquette `v*`.
+
+### Depuis les sources
 
 ```sh
-cargo build
-cargo test --workspace
-cargo dev            # lance avec config/antenne.example.toml
+bash scripts/setup-linux.sh        # ou setup-macos.sh, ou setup-windows.ps1
+cargo run --release -p antenne -- --config config/antenne.example.toml run
 ```
 
-Dans VSCode : `Ctrl+Shift+B` (build), **Terminal › Exécuter la tâche** (tests, clippy, run…),
-`F5` (débogage).
+## Premiers pas
 
-### 4. Écouter
+1. **Lancer Antenne**, puis ouvrir l'interface : <http://localhost:8080/>.
+2. **Jouer du son** vers une carte : choisir « Antenne Carte 1 » comme sortie dans les réglages
+   son du système ou dans une application. Son vu-mètre doit bouger.
+3. **Écouter** : bouton « Écouter » de la carte, dans l'interface. Le navigateur se connecte en
+   WebRTC, exactement comme le fera un ESP32.
+4. **Brancher un client** : un client WHEP envoie son offre SDP sur l'adresse WebRTC de la
+   carte (`POST http://<pc>:8080/whep/carte1`). Le protocole est décrit dans
+   [docs/04-esp32.md](docs/04-esp32.md).
+
+Pour déboguer sans WebRTC :
 
 ```sh
-curl http://localhost:8080/api/cards
-ffplay -nodisp -fflags nobuffer -flags low_delay http://localhost:8080/stream/test
+ffplay -nodisp -fflags nobuffer -flags low_delay http://localhost:8080/stream/carte1
+vlc --network-caching=50 http://localhost:8080/stream/carte1
 ```
-
-Sous Linux, jouer un son vers « Antenne Carte 1 » puis écouter `/stream/carte1`.
 
 ## Configuration
 
-Copier `config/antenne.example.toml` en `config/antenne.toml` (ignoré par git) :
+Un fichier TOML ; l'exemple commenté est [config/antenne.example.toml](config/antenne.example.toml).
+L'interface web le réécrit quand on change un réglage, en gardant l'ancienne version en `.bak`.
 
 ```toml
+[server]
+bind = "0.0.0.0:8080"            # adresse de l'interface, de l'API et du WebRTC
+
 [[card]]
-id = "carte1"
-name = "Antenne Carte 1"
-channels = "stereo"                               # ou "mono"
-source = { kind = "virtual" }                     # ou device / tone
-encoding = { codec = "opus", bitrate_kbps = 96 }  # ou g711u, g711a, pcm16
-path = "/whep/carte1"                             # adresse WebRTC de la carte
+id = "salon"                     # sert dans les adresses : /whep/salon, /stream/salon
+name = "Salon"                   # nom de la sortie audio côté système
+channels = "stereo"              # ou "mono"
+source = { kind = "virtual" }    # ou { kind = "device", device = "…" } / { kind = "tone" }
+encoding = { codec = "opus", bitrate_kbps = 96 }   # ou g711u, g711a, pcm16
+max_listeners = 4
 ```
 
-Valider : `cargo run -p antenne -- --config config/antenne.toml check`.
+Pour vérifier un fichier : `antenne --config antenne.toml check`. Pour lister les entrées
+audio : `antenne devices`.
 
-## Structure
+## API
+
+| Route | Rôle |
+|-------|------|
+| `GET /` | interface web |
+| `GET /api/cards` · `POST /api/cards` | liste des cartes · ajout |
+| `PUT /api/cards/{id}` · `DELETE /api/cards/{id}` | modification · suppression |
+| `GET /api/status` · `GET /api/levels` · `GET /api/devices` | état du serveur · vu-mètres · entrées audio |
+| `POST <path>` · `DELETE <path>/<session>` | WebRTC (WHEP) : ouverture · fermeture de session |
+| `GET /stream/{id}` | flux WAV de debug |
+
+⚠️ L'interface et l'API n'ont **pas d'authentification** : n'importe qui sur le réseau local
+peut modifier les cartes. Pour limiter l'accès à la machine elle-même, mettre
+`bind = "127.0.0.1:8080"`.
+
+## Développement
+
+```sh
+cargo build                  # binaire `antenne` (Opus inclus)
+cargo test --workspace
+cargo lint                   # clippy strict, comme la CI
+cargo fmt --all
+cargo dev                    # lance avec la config d'exemple
+packaging/linux/build-appimage.sh   # dist/Antenne-<v>-x86_64.AppImage
+packaging/macos/build-dmg.sh        # sur un Mac : DMG universel
+```
 
 ```
-.vscode/            réglages, tâches, débogage, extensions
-.github/workflows/  CI : fmt, clippy, tests sur Linux / macOS / Windows
-.claude/            permissions Claude Code
-config/             configuration d'exemple
 crates/
-  antenne-core/     configuration, types communs
-  antenne-audio/    capture cpal, cartes virtuelles (PipeWire, loopback)
-  antenne-codec/    PCM16, G.711, Opus (feature)
-  antenne-net/      serveur HTTP : API, WHEP, flux de debug
-  antenne/          binaire et orchestration
-docs/               cahier des charges, architecture, plateformes, ESP32, roadmap
-scripts/            installation des dépendances par OS
-CLAUDE.md           contexte pour Claude Code
+  antenne-core/     configuration TOML et validation, types communs
+  antenne-audio/    capture (cpal), cartes virtuelles (PipeWire, loopback), tonalité
+  antenne-codec/    PCM16, G.711, Opus
+  antenne-net/      serveur HTTP : interface, API, WebRTC (str0m), flux WAV
+  antenne/          binaire, gestion des cartes à chaud
+config/             configuration d'exemple
+packaging/          AppImage, DMG, icône
+docs/               documentation
 ```
+
+Le contexte pour Claude Code est dans [CLAUDE.md](CLAUDE.md). La CI vérifie le format,
+clippy et les tests sur Linux, macOS et Windows, ainsi que la version minimale de Rust (1.85).
 
 ## Documentation
 
 1. [Cahier des charges](docs/01-cahier-des-charges.md)
-2. [Architecture](docs/02-architecture.md)
-3. [Plateformes](docs/03-plateformes.md)
-4. [Clients ESP32](docs/04-esp32.md)
+2. [Architecture](docs/02-architecture.md) : crates, threads, décisions
+3. [Plateformes](docs/03-plateformes.md) : cartes virtuelles et paquets par OS
+4. [Clients ESP32](docs/04-esp32.md) : protocole WHEP, codecs
 5. [Roadmap](docs/05-roadmap.md)
+6. [Interface web](docs/06-interface.md) : guide d'utilisation
+
+## État
+
+Jalons 0 à 3 terminés : socle, Linux de bout en bout, WebRTC, interface web, paquets.
+Prochaines étapes : client ESP32 (jalon 4), validation macOS / Windows (jalon 5),
+robustesse (jalon 6). Le détail est dans la [roadmap](docs/05-roadmap.md).
 
 ## Licence
 
