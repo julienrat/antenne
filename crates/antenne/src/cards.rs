@@ -176,7 +176,18 @@ impl CardManager {
                     vcard.first_channel,
                 );
                 running.vcard = Some(vcard);
-                capture::spawn_capture(spec, sink)
+                let loopback = backend.positional();
+                capture::spawn_capture(spec, sink).map_err(|e| {
+                    if loopback {
+                        e.context(
+                            "pilote de bouclage introuvable : installer BlackHole 16ch (macOS, \
+                             https://existential.audio/blackhole/) ou VB-CABLE (Windows), ou \
+                             corriger platform.loopback_device dans la configuration",
+                        )
+                    } else {
+                        e
+                    }
+                })
             }
         }
     }

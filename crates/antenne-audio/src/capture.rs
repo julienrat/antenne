@@ -98,10 +98,8 @@ pub fn find_input_device(host: &cpal::Host, patterns: &[String]) -> anyhow::Resu
         .input_devices()
         .context("énumération des entrées audio")?
         .collect();
-    let names: Vec<String> = devices
-        .iter()
-        .map(|d| d.to_string().to_lowercase())
-        .collect();
+    let labels: Vec<String> = devices.iter().map(|d| d.to_string()).collect();
+    let names: Vec<String> = labels.iter().map(|n| n.to_lowercase()).collect();
 
     let index = names
         .iter()
@@ -113,9 +111,21 @@ pub fn find_input_device(host: &cpal::Host, patterns: &[String]) -> anyhow::Resu
         });
     match index {
         Some(i) => Ok(devices.swap_remove(i)),
-        None => bail!(
-            "aucune entrée audio ne correspond à {patterns:?} (lister avec `antenne devices`)"
-        ),
+        None => {
+            let available = if labels.is_empty() {
+                "aucune".to_string()
+            } else {
+                labels
+                    .iter()
+                    .take(12)
+                    .map(|n| format!("« {n} »"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            };
+            bail!(
+                "aucune entrée audio ne correspond à {patterns:?} ; entrées disponibles : {available}"
+            )
+        }
     }
 }
 

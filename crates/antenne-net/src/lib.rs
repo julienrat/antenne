@@ -197,14 +197,21 @@ async fn whep_or_not_found(State(state): State<AppState>, request: Request) -> R
     (StatusCode::NOT_FOUND, "introuvable").into_response()
 }
 
-/// Démarre le serveur HTTP et rend la main à l'arrêt (`shutdown` résolu).
-pub async fn serve<F>(bind: SocketAddr, state: AppState, shutdown: F) -> std::io::Result<()>
+/// Sert l'application sur `listener` (déjà ouvert par l'appelant, qui peut
+/// ainsi vérifier le port avant de créer les cartes) et rend la main à l'arrêt
+/// (`shutdown` résolu).
+pub async fn serve<F>(
+    listener: tokio::net::TcpListener,
+    state: AppState,
+    shutdown: F,
+) -> std::io::Result<()>
 where
     F: Future<Output = ()> + Send + 'static,
 {
+    let bind = listener.local_addr()?;
     // TCP_NODELAY : les trames de 10 ms partent tout de suite au lieu d'être
     // regroupées par l'algorithme de Nagle (jusqu'à ~40 ms de retard).
-    let listener = tokio::net::TcpListener::bind(bind).await?.tap_io(|tcp| {
+    let listener = listener.tap_io(|tcp| {
         if let Err(e) = tcp.set_nodelay(true) {
             tracing::debug!("TCP_NODELAY impossible : {e}");
         }

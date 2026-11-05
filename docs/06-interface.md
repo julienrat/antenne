@@ -155,9 +155,11 @@ plus se connecter : c'est un réglage pour tester, pas pour diffuser.
 | Symptôme | Cause probable | Que faire |
 |----------|----------------|-----------|
 | Pastille rouge « Serveur injoignable » | Antenne est arrêté, ou mauvais port | Relancer Antenne ; vérifier `bind`. |
-| Antenne s'arrête au démarrage avec « Address already in use » | Un autre programme utilise le port | Changer le port de `bind` (par exemple `0.0.0.0:8090`). |
+| Au démarrage : « Antenne … tourne déjà sur le port … » | Une autre Antenne est déjà lancée (souvent restée en arrière-plan) | Ouvrir l'adresse indiquée et utiliser son bouton **Quitter**, ou garder celle-là. |
+| Au démarrage : « le port … est déjà utilisé par un autre programme » | Un autre logiciel occupe le port | Changer le port de `bind` dans le fichier indiqué (par exemple `0.0.0.0:8090`). |
 | Voyant rouge, « aucune entrée audio ne correspond » | Entrée débranchée ou renommée | Choisir une entrée de la liste dans les réglages. |
 | Voyant rouge, « aucun backend de cartes virtuelles » | Linux : `pactl` absent ; macOS / Windows : pilote de bouclage absent ou `loopback_device` faux | Installer `pipewire-pulse` (ou `pulseaudio-utils`), BlackHole ou VB-CABLE. |
+| Voyant rouge, « pilote de bouclage introuvable » (macOS, Windows) | BlackHole / VB-CABLE absent, ou nom différent de `loopback_device` | Installer BlackHole 16ch (macOS) ou VB-CABLE (Windows) ; sinon recopier dans `loopback_device` un nom de la liste « entrées disponibles » du message. |
 | Vu-mètre immobile | Aucune application ne joue vers la carte | Choisir la carte comme sortie dans l'application ou dans les réglages son. |
 | « Écoute WebRTC impossible : … codec » | Le navigateur ne propose pas le codec de la carte | Passer la carte en Opus. |
 | « nombre maximal d'auditeurs atteint » | La carte est pleine | Augmenter *Auditeurs maximum* ou déconnecter un client. |
