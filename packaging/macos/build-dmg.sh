@@ -93,11 +93,16 @@ Antenne — installation sur macOS
 2. Premier lancement : clic droit sur Antenne.app > Ouvrir > Ouvrir
    (l'application n'est pas notarisée par Apple).
 3. Les cartes « virtuelles » utilisent un pilote de bouclage : installer
-   BlackHole 16ch (https://existential.audio/blackhole/), puis vérifier
-   loopback_device dans ~/Library/Application Support/Antenne/antenne.toml.
-4. Au premier lancement, autoriser l'accès au micro pour le Terminal
-   (Réglages Système > Confidentialité et sécurité > Micro) : c'est lui qui
-   fait tourner Antenne.
+   BlackHole 16ch (8 cartes stéréo) ou 64ch (32 cartes stéréo) depuis
+   https://existential.audio/blackhole/ ou `brew install --cask blackhole-16ch`,
+   puis vérifier loopback_device dans
+   ~/Library/Application Support/Antenne/antenne.toml.
+4. Au premier lancement, accepter : « contrôler Terminal », l'accès au micro
+   pour le Terminal (sinon les cartes restent silencieuses) et les connexions
+   entrantes (sinon les ESP32 ne peuvent pas se connecter).
+
+Guide complet (autorisations, routage du son, dépannage) :
+https://github.com/julienrat/antenne/blob/main/docs/07-macos.md
 
 Antenne s'ouvre dans une fenêtre du Terminal (Ctrl+C pour l'arrêter) et
 l'interface dans le navigateur : http://localhost:8080/

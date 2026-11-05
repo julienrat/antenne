@@ -43,6 +43,8 @@ il faut un plug-in de pilote **AudioServerPlugIn** installé dans
 `/Library/Audio/Plug-Ins/HAL/` (signé, et notarisé pour la distribution).
 
 **v1** : backend `loopback` sur **BlackHole 16ch** (`brew install --cask blackhole-16ch`).
+Variantes : 2ch (1 carte stéréo), **16ch (8 stéréo, défaut)**, 64ch (32 stéréo, chaque carte lit
+alors les 64 canaux). Guide utilisateur : [07-macos.md](07-macos.md).
 Les cartes sont réparties dans l'ordre du fichier : carte 1 stéréo → canaux 1-2, carte 2 mono →
 canal 3, etc. Les applications choisissent leurs canaux de sortie (routage dans le DAW, ou
 « Configuration audio et MIDI » pour créer un périphérique agrégé).

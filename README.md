@@ -60,7 +60,8 @@ l'interface s'ouvre dans le navigateur. Les cartes virtuelles demandent `pactl`,
 Ouvrir `Antenne-<version>-macos-universal.dmg` et glisser **Antenne.app** dans Applications.
 Au premier lancement, faire **clic droit > Ouvrir** : l'application n'est pas notarisée par
 Apple. Pour les cartes virtuelles, installer [BlackHole 16ch](https://existential.audio/blackhole/).
-Le fichier `LISEZMOI.txt` du DMG donne le détail.
+Le guide complet est dans [docs/07-macos.md](docs/07-macos.md) : autorisations,
+routage du son vers les canaux de BlackHole, ESP32, dépannage.
 
 Les paquets sont produits par le workflow [Paquets](.github/workflows/release.yml) :
 lancement manuel depuis l'onglet *Actions*, ou automatique sur une étiquette `v*`.
@@ -162,6 +163,7 @@ clippy et les tests sur Linux, macOS et Windows, ainsi que la version minimale d
 4. [Clients ESP32](docs/04-esp32.md) : protocole WHEP, codecs
 5. [Roadmap](docs/05-roadmap.md)
 6. [Interface web](docs/06-interface.md) : guide d'utilisation
+7. [Utiliser Antenne sur macOS](docs/07-macos.md) : BlackHole, autorisations, routage du son
 
 ## État
 
