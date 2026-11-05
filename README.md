@@ -26,7 +26,8 @@ ou un simple navigateur.
   (BlackHole, VB-CABLE).
 - **Une adresse WebRTC par carte** (`/whep/salon`), en mono ou en stéréo, en Opus ou en G.711.
   Le WebRTC est mesuré à **35–55 ms** de latence dans un navigateur en réseau local.
-- **Interface web** : état des cartes, vu-mètres, écoute directe, réglages et ajout de cartes.
+- **Interface web** : état des cartes, vu-mètres, écoute directe, réglages et ajout de cartes,
+  bouton pour quitter Antenne quand il tourne en arrière-plan.
   Les changements s'appliquent **sans redémarrer** et sont enregistrés dans le fichier de
   configuration.
 - **Autres sources** possibles pour une carte : une entrée existante (micro, interface audio)
@@ -118,11 +119,12 @@ audio : `antenne devices`.
 | `GET /api/cards` · `POST /api/cards` | liste des cartes · ajout |
 | `PUT /api/cards/{id}` · `DELETE /api/cards/{id}` | modification · suppression |
 | `GET /api/status` · `GET /api/levels` · `GET /api/devices` | état du serveur · vu-mètres · entrées audio |
+| `POST /api/shutdown` | arrête Antenne (bouton « Quitter » de l'interface) |
 | `POST <path>` · `DELETE <path>/<session>` | WebRTC (WHEP) : ouverture · fermeture de session |
 | `GET /stream/{id}` | flux WAV de debug |
 
 ⚠️ L'interface et l'API n'ont **pas d'authentification** : n'importe qui sur le réseau local
-peut modifier les cartes. Pour limiter l'accès à la machine elle-même, mettre
+peut modifier les cartes ou arrêter Antenne. Pour limiter l'accès à la machine elle-même, mettre
 `bind = "127.0.0.1:8080"`.
 
 ## Développement

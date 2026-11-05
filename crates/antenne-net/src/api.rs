@@ -171,3 +171,21 @@ pub(crate) async fn devices(State(state): State<AppState>) -> Response {
         Err(e) => ControlError::Failed(format!("tâche interrompue : {e}")).into_response(),
     }
 }
+
+/// `POST /api/shutdown` : arrêt d'Antenne demandé depuis l'interface.
+///
+/// La réponse part avant l'arrêt ; l'application libère ensuite l'audio
+/// (cartes virtuelles supprimées) et ferme les flux, comme pour Ctrl+C.
+pub(crate) async fn shutdown(
+    State(state): State<AppState>,
+    request: axum::extract::Request,
+) -> Response {
+    let client = request
+        .extensions()
+        .get::<axum::extract::ConnectInfo<std::net::SocketAddr>>()
+        .map(|c| c.0.to_string())
+        .unwrap_or_else(|| "?".to_string());
+    tracing::info!(%client, "arrêt demandé depuis l'interface web");
+    state.quit.notify_one();
+    StatusCode::ACCEPTED.into_response()
+}

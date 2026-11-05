@@ -24,6 +24,17 @@ La pastille en haut à droite indique la connexion :
 Le bouton **Thème** fait défiler *auto* (suit le système), *clair* et *sombre*. Le choix est
 mémorisé dans le navigateur.
 
+## Quitter Antenne
+
+Le bouton rouge **Quitter**, en haut à droite, arrête Antenne : utile quand il tourne en
+arrière-plan sans fenêtre. Cliquer une fois : le bouton devient **« Confirmer l'arrêt ? »**,
+cliquer à nouveau dans les 3 secondes pour confirmer.
+
+L'arrêt est le même qu'un Ctrl+C dans le terminal : les sorties audio créées par Antenne sont
+supprimées, les auditeurs (ESP32, navigateurs, VLC) sont déconnectés, puis le programme se
+termine. La page affiche alors « Antenne est arrêté » et ne cherche plus à se reconnecter.
+Pour relancer Antenne, rouvrir l'application (AppImage, Antenne.app) ou relancer la commande.
+
 ## Le bandeau d'état
 
 | Case | Signification |
@@ -135,7 +146,7 @@ d'Antenne est dans le terminal qui le fait tourner.
 ## Sécurité
 
 L'interface n'a **pas de mot de passe** : tout appareil qui peut joindre le port d'Antenne peut
-modifier ou supprimer des cartes. Sur un réseau partagé, limiter l'accès à l'ordinateur
+modifier ou supprimer des cartes, et **arrêter Antenne** avec le bouton Quitter. Sur un réseau partagé, limiter l'accès à l'ordinateur
 lui-même en mettant `bind = "127.0.0.1:8080"` dans `[server]`. Les ESP32 ne pourront alors
 plus se connecter : c'est un réglage pour tester, pas pour diffuser.
 

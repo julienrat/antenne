@@ -15,6 +15,7 @@ pub async fn run(config: Config, config_path: PathBuf) -> anyhow::Result<()> {
     let bind = config.server.bind;
     let public_ip = config.server.public_ip;
     let audio = config.audio.clone();
+    let quit = Arc::new(tokio::sync::Notify::new());
 
     // Création des cartes virtuelles et ouverture des périphériques : bloquant.
     let rt = Handle::current();
@@ -34,11 +35,16 @@ pub async fn run(config: Config, config_path: PathBuf) -> anyhow::Result<()> {
         control: Arc::new(manager.clone()),
         public_ip,
         sessions: Default::default(),
+        quit: Arc::clone(&quit),
     };
 
     let on_signal = manager.clone();
     let shutdown = async move {
-        shutdown_signal().await;
+        // Ctrl+C dans le terminal, ou bouton « Quitter » de l'interface.
+        tokio::select! {
+            () = shutdown_signal() => {}
+            () = quit.notified() => tracing::info!("arrêt demandé (interface web)"),
+        }
         // Libère l'audio et ferme les flux en cours, sinon l'arrêt « propre »
         // du serveur attendrait indéfiniment les auditeurs connectés.
         let _ = tokio::task::spawn_blocking(move || on_signal.shutdown()).await;

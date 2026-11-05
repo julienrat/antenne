@@ -45,6 +45,11 @@ button{font:inherit;color:inherit}
 .btn:disabled{opacity:.5;cursor:default}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.danger{color:var(--clip)}
+.btn.danger.armed{background:var(--clip);border-color:var(--clip);color:#fff}
+.stopped{margin:0 0 20px;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--clip);border-radius:8px;background:var(--panel)}
+.stopped strong{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:22px}
+.stopped p{margin:4px 0 0;color:var(--muted);font-size:14px}
+body.is-stopped .master,body.is-stopped section{opacity:.45;pointer-events:none}
 
 .led{width:10px;height:10px;border-radius:50%;background:var(--led-off);flex:none}
 .led.on{background:var(--live);box-shadow:0 0 0 3px color-mix(in srgb,var(--live) 22%,transparent)}
@@ -171,8 +176,14 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
     <div class="top-actions">
       <span class="mode"><span class="led warn" id="modeLed"></span><span id="modeText">Connexion…</span></span>
       <button class="btn" id="themeBtn" type="button">Thème : auto</button>
+      <button class="btn danger" id="quitBtn" type="button" title="Arrêter Antenne : cartes virtuelles supprimées, auditeurs déconnectés">Quitter</button>
     </div>
   </header>
+
+  <div class="stopped" id="stoppedMsg" role="status" hidden>
+    <strong>Antenne est arrêté</strong>
+    <p>Les cartes virtuelles ont été supprimées et les auditeurs déconnectés. Vous pouvez fermer cet onglet ; pour relancer Antenne, rouvrez l'application.</p>
+  </div>
 
   <dl class="master" aria-label="État du serveur">
     <div><dt>Cartes virtuelles</dt><dd><span class="led" id="vbLed"></span><span id="vbName">—</span></dd></div>
@@ -454,7 +465,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
   const toPos = (v) => (v > 0 ? Math.max(0, Math.min(1, (20 * Math.log10(v) + 60) / 60)) : 0);
   function paintMeters() {
     document.querySelectorAll(".meter").forEach((m) => {
-      const v = S.online ? (S.levels[m.dataset.id]?.[Number(m.dataset.ch)] ?? 0) : 0;
+      const v = S.online && !S.stopped ? (S.levels[m.dataset.id]?.[Number(m.dataset.ch)] ?? 0) : 0;
       m.style.setProperty("--lvl", (toPos(v) * 100).toFixed(1) + "%");
     });
   }
@@ -965,7 +976,37 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
   }
 
   /* ---------- Rafraîchissement ---------- */
+  /* ---------- Quitter ---------- */
+  let quitTimer;
+  $("quitBtn").addEventListener("click", async () => {
+    const btn = $("quitBtn");
+    if (!btn.classList.contains("armed")) {
+      btn.classList.add("armed"); btn.textContent = "Confirmer l’arrêt ?";
+      quitTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Quitter"; }, 3000);
+      return;
+    }
+    clearTimeout(quitTimer);
+    btn.disabled = true; btn.textContent = "Arrêt…";
+    stopListening(true);
+    try {
+      const r = await fetch("/api/shutdown", { method: "POST" });
+      if (!r.ok) throw new Error(`erreur ${r.status}`);
+      S.stopped = true;
+      document.body.classList.add("is-stopped");
+      $("stoppedMsg").hidden = false;
+      $("modeLed").className = "led";
+      $("modeText").textContent = "Antenne est arrêté";
+      btn.textContent = "Arrêté";
+      log("Antenne arrêté depuis l’interface");
+      paintMeters();
+    } catch (e) {
+      btn.disabled = false; btn.classList.remove("armed"); btn.textContent = "Quitter";
+      toast(`Arrêt impossible : ${e.message}`);
+    }
+  });
+
   function setOnline(ok) {
+    if (S.stopped) return;
     if (S.online === ok) return;
     S.online = ok;
     $("modeLed").className = "led " + (ok ? "on" : "err");
@@ -985,6 +1026,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
   }
 
   async function poll() {
+    if (S.stopped) return;
     try {
       const [cards, status] = await Promise.all([getJSON("/api/cards"), getJSON("/api/status")]);
       if (S.online) diffCards(S.cards, cards);
@@ -1002,7 +1044,7 @@ dialog::backdrop{background:rgba(10,14,20,.45)}
 
   let levelsBusy = false;
   async function pollLevels() {
-    if (levelsBusy || !S.online || document.hidden) return;
+    if (levelsBusy || S.stopped || !S.online || document.hidden) return;
     levelsBusy = true;
     try { S.levels = await getJSON("/api/levels"); paintMeters(); }
     catch (e) { /* la boucle principale signale la perte de connexion */ }

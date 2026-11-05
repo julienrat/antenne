@@ -11,6 +11,7 @@
 //! | `GET /api/devices`        | entrées audio utilisables comme source          |
 //! | `GET /api/status`         | état du serveur : fréquence, trame, durée       |
 //! | `GET /api/levels`         | niveaux crête par carte et par canal            |
+//! | `POST /api/shutdown`      | arrête Antenne (bouton « Quitter »)             |
 //! | `GET /stream/{id}`        | flux WAV PCM16 continu, pour tester (VLC…)      |
 //! | `POST <path>`             | WHEP : offre SDP → session WebRTC de la carte   |
 //! | `DELETE <path>/<id>`      | WHEP : fin de session                           |
@@ -30,7 +31,7 @@ use axum::Router;
 use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, put};
+use axum::routing::{get, post, put};
 use axum::serve::ListenerExt;
 use serde::Serialize;
 use tokio::sync::broadcast;
@@ -111,6 +112,9 @@ pub struct AppState {
     pub public_ip: Option<IpAddr>,
     /// Sessions WebRTC en cours.
     pub sessions: webrtc::Sessions,
+    /// Demande d'arrêt du programme (bouton « Quitter » de l'interface),
+    /// attendue par l'application au même titre que Ctrl+C.
+    pub quit: Arc<tokio::sync::Notify>,
 }
 
 impl std::fmt::Debug for AppState {
@@ -150,6 +154,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/devices", get(api::devices))
         .route("/api/status", get(ui::status))
         .route("/api/levels", get(ui::levels))
+        .route("/api/shutdown", post(api::shutdown))
         .route("/stream/{id}", get(wav::stream_wav))
         // Les chemins WHEP sont libres et changent avec les cartes : résolus ici.
         .fallback(whep_or_not_found)

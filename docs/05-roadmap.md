@@ -71,4 +71,5 @@ trois OS, docs à jour. Cocher au fur et à mesure.
 - [x] Interface de configuration : ajout / modification / suppression / mise en service des cartes depuis la page web, appliqué à chaud et enregistré dans le TOML
 - [x] AppImage Linux x86_64 (`packaging/linux/build-appimage.sh`) et DMG macOS universel signé ad hoc (`packaging/macos/build-dmg.sh`, sur Mac ou via `.github/workflows/release.yml`)
 - [ ] Signature Developer ID + notarisation Apple, `.deb`, `.msi` (voir 03-plateformes.md)
+- [x] Bouton « Quitter » dans l'interface (`POST /api/shutdown`, même arrêt propre que Ctrl+C)
 - [ ] Lancement au démarrage de session
