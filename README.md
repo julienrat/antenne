@@ -150,7 +150,7 @@ docs/               documentation
 ```
 
 Le contexte pour Claude Code est dans [CLAUDE.md](CLAUDE.md). La CI vérifie le format,
-clippy et les tests sur Linux, macOS et Windows, ainsi que la version minimale de Rust (1.85).
+clippy et les tests sur Linux, macOS et Windows, ainsi que la version minimale de Rust (1.89, imposée par str0m).
 
 ## Documentation
 

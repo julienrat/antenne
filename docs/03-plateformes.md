@@ -95,3 +95,10 @@ Studio (extension `ms-vscode.cpptools`) ; CodeLLDB fonctionne aussi.
 Non signé par un Developer ID ni notarisé : Gatekeeper demande clic droit > Ouvrir au
 premier lancement. La compilation croisée Linux → macOS n'est pas possible
 simplement (bindgen de cpal a besoin des en-têtes du SDK Apple).
+
+### Compiler sous Windows
+
+str0m (WebRTC) tire `aws-lc-sys` via dimpl (génération du certificat DTLS), même avec le backend
+rust-crypto. Sous Windows, il faut soit **NASM** dans le `PATH`, soit
+`AWS_LC_SYS_PREBUILT_NASM=1` (objets pré-assemblés, utilisé par la CI). Opus est compilé depuis
+les sources avec **CMake** s'il n'est pas trouvé par pkg-config.

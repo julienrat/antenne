@@ -24,6 +24,9 @@ jobs:
   build:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      # aws-lc-sys (tiré par str0m / dimpl) exige NASM sous Windows : objets pré-assemblés.
+      AWS_LC_SYS_PREBUILT_NASM: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -72,13 +75,13 @@ jobs:
           if-no-files-found: ignore
 
   msrv:
-    name: MSRV (1.85)
+    name: MSRV (1.89)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@1.85
+      - uses: dtolnay/rust-toolchain@1.89
       - uses: Swatinem/rust-cache@v2
       - run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config clang libclang-dev libasound2-dev libpipewire-0.3-dev
-      - run: cargo +1.85 check --workspace
+          sudo apt-get install -y --no-install-recommends pkg-config clang libclang-dev libasound2-dev libpipewire-0.3-dev libopus-dev
+      - run: cargo +1.89 check --workspace

@@ -64,7 +64,7 @@ et `antenne-net` ne se connaissent pas (c'est `antenne` qui les relie).
 
 | # | Décision | Pourquoi | Statut |
 |---|----------|----------|--------|
-| D1 | **Rust stable, édition 2024, MSRV 1.85** | sûreté mémoire + perf temps réel, binaire unique | acté |
+| D1 | **Rust stable, édition 2024, MSRV 1.89** (minimum de str0m) | sûreté mémoire + perf temps réel, binaire unique | acté |
 | D2 | **cpal 0.18** pour la capture | seule couche Rust mûre couvrant CoreAudio, WASAPI, ALSA, PipeWire natif | acté |
 | D3 | **PipeWire null sink** par carte sous Linux (via `pactl` en v1) | création / suppression dynamique, sans pilote | proposé |
 | D4 | **Pilote de bouclage existant** sous macOS / Windows, découpé en canaux | un pilote maison = signature / notarisation, hors v1 | proposé |

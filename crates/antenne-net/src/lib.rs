@@ -219,7 +219,7 @@ pub(crate) struct ListenerGuard(Arc<AtomicUsize>);
 
 impl ListenerGuard {
     // `fetch_update` est renommé `try_update` dans les toolchains récentes, mais
-    // `try_update` n'existe pas en 1.85 (rust-version du workspace).
+    // `try_update` n'existe pas en 1.89 (rust-version du workspace).
     #[allow(deprecated)]
     pub(crate) fn acquire(counter: &Arc<AtomicUsize>, max: usize) -> Option<Self> {
         counter
